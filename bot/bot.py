@@ -30,17 +30,23 @@ async def cmd_start(update: Update, _: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hi! I can restart your Docker service.\n\n"
         "Commands:\n"
-        "/whoami – show your chat id"
+        "/whoami – show your chat id\n"
+        "/authorized – check authorization status"
     )
 
 async def cmd_whoami(update: Update, _: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id if update.effective_user else 0
     await update.message.reply_text(f"Your chat id: `{uid}`", parse_mode="Markdown")
 
+async def cmd_authorized(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    uid = update.effective_user.id if update.effective_user else 0
+    await update.message.reply_text("true" if is_allowed(uid) else "false")
+
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("whoami", cmd_whoami))
+    app.add_handler(CommandHandler("authorized", cmd_authorized))
     app.run_polling(allowed_updates=["message"])
 
 if __name__ == "__main__":
