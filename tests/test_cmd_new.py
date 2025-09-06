@@ -99,8 +99,6 @@ def test_cmd_new_with_date_and_year_default_all_fields():
         "description": "lunch",
         "category": "food",
         "type": "want",
-    }
-
 
 def test_cmd_new_invalid_date():
     msg_date = datetime(2024, 1, 1)
