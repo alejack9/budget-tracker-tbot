@@ -2,7 +2,7 @@ import os, json, logging, re, shlex
 from datetime import datetime
 from typing import List
 import requests
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 logging.basicConfig(level=logging.WARNING)
@@ -13,6 +13,24 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 ALLOWED = {
     int(x) for x in os.environ.get("ALLOWED_CHAT_IDS", "").split(",") if x.strip().isdigit()
 }
+
+CATEGORIES: List[str] = [
+    "Food",
+    "Gifts",
+    "Health/medical",
+    "Home",
+    "Transportation",
+    "Personal",
+    "Utilities",
+    "Travel",
+    "Debt",
+    "Other",
+    "Family",
+    "Wardrobe",
+    "Investments",
+]
+
+TYPES: List[str] = ["need", "want", "goal"]
 
 def is_allowed(chat_id: int) -> bool:
     return (not ALLOWED) or (chat_id in ALLOWED)
@@ -112,6 +130,17 @@ async def cmd_new(update: Update, _: ContextTypes.DEFAULT_TYPE):
         "category": category,
         "type": type_,
     }
+    missing = False
+    if not category:
+        buttons = [[InlineKeyboardButton(c, callback_data=f"cat:{c}")] for c in CATEGORIES]
+        await msg.reply_text("Select category:", reply_markup=InlineKeyboardMarkup(buttons))
+        missing = True
+    if not type_:
+        buttons = [[InlineKeyboardButton(t, callback_data=f"type:{t}")] for t in TYPES]
+        await msg.reply_text("Select type:", reply_markup=InlineKeyboardMarkup(buttons))
+        missing = True
+    if missing:
+        return
 
     await msg.reply_text(json.dumps(entry))
 

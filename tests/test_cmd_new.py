@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 # ensure BOT_TOKEN env var for module import
 os.environ.setdefault("BOT_TOKEN", "TEST_TOKEN")
 
-from bot.bot import cmd_new
+from bot.bot import CATEGORIES, TYPES, cmd_new
 
 class DummyChat:
     def __init__(self, message):
@@ -27,8 +27,11 @@ class DummyMessage:
         self.date = date
         self.replies = []
 
-    async def reply_text(self, text):
-        self.replies.append(text)
+    async def reply_text(self, text, reply_markup=None):
+        if reply_markup is None:
+            self.replies.append(text)
+        else:
+            self.replies.append((text, reply_markup))
 
 class DummyUser:
     def __init__(self, uid=123):
@@ -45,24 +48,49 @@ def run(coro):
     return asyncio.run(coro)
 
 
-def test_cmd_new_without_date():
+def test_cmd_new_missing_category_and_type():
     dt = datetime(2024, 1, 2)
     upd = DummyUpdate("/new 10 coffee", dt)
     run(cmd_new(upd, None))
+    assert len(upd.message.replies) == 2
+    cat_text, cat_markup = upd.message.replies[0]
+    assert cat_text == "Select category:"
+    cat_labels = [b.text for row in cat_markup.inline_keyboard for b in row]
+    assert cat_labels == CATEGORIES
+    type_text, type_markup = upd.message.replies[1]
+    assert type_text == "Select type:"
+    type_labels = [b.text for row in type_markup.inline_keyboard for b in row]
+    assert type_labels == TYPES
+
+
+def test_cmd_new_with_date_and_year_default_missing_type():
+    msg_date = datetime(2024, 5, 4)
+    upd = DummyUpdate("/new 01/02 5 lunch food", msg_date)
+    run(cmd_new(upd, None))
     assert len(upd.message.replies) == 1
+    text, markup = upd.message.replies[0]
+    assert text == "Select type:"
+    labels = [b.text for row in markup.inline_keyboard for b in row]
+    assert labels == TYPES
+
+
+def test_cmd_new_without_date_all_fields():
+    dt = datetime(2024, 1, 2)
+    upd = DummyUpdate("/new 10 coffee food need", dt)
+    run(cmd_new(upd, None))
     data = json.loads(upd.message.replies[0])
     assert data == {
         "date": dt.date().isoformat(),
         "amount": 10.0,
         "description": "coffee",
-        "category": "",
-        "type": "",
+        "category": "food",
+        "type": "need",
     }
 
 
-def test_cmd_new_with_date_and_year_default():
+def test_cmd_new_with_date_and_year_default_all_fields():
     msg_date = datetime(2024, 5, 4)
-    upd = DummyUpdate("/new 01/02 5 lunch food", msg_date)
+    upd = DummyUpdate("/new 01/02 5 lunch food want", msg_date)
     run(cmd_new(upd, None))
     data = json.loads(upd.message.replies[0])
     assert data == {
@@ -70,9 +98,7 @@ def test_cmd_new_with_date_and_year_default():
         "amount": 5.0,
         "description": "lunch",
         "category": "food",
-        "type": "",
-    }
-
+        "type": "want",
 
 def test_cmd_new_invalid_date():
     msg_date = datetime(2024, 1, 1)
