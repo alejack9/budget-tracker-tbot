@@ -1,7 +1,6 @@
 import os, json, logging, re, shlex
 from datetime import datetime
 from typing import List
-import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -31,6 +30,7 @@ CATEGORIES: List[str] = [
 ]
 
 TYPES: List[str] = ["need", "want", "goal"]
+
 
 def is_allowed(chat_id: int) -> bool:
     return (not ALLOWED) or (chat_id in ALLOWED)
@@ -154,4 +154,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

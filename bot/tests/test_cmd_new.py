@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 # ensure BOT_TOKEN env var for module import
 os.environ.setdefault("BOT_TOKEN", "TEST_TOKEN")
 
-from bot.bot import CATEGORIES, TYPES, cmd_new
+from src.expanses_tracker_tbot.main import CATEGORIES, TYPES, cmd_new
 
 class DummyChat:
     def __init__(self, message):
@@ -99,6 +99,7 @@ def test_cmd_new_with_date_and_year_default_all_fields():
         "description": "lunch",
         "category": "food",
         "type": "want",
+    }
 
 def test_cmd_new_invalid_date():
     msg_date = datetime(2024, 1, 1)
