@@ -1,6 +1,6 @@
 import os, json, logging, re, shlex
 from typing import List
-from expanses_tracker_tbot.message_parser import get_message_args
+from expanses_tracker_tbot.message_parser import Expense, get_message_args
 from pydantic import BaseModel, ValidationError
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
@@ -16,9 +16,12 @@ ALLOWED = {
 }
 
 # TODO add reference to entry
-class QueryData(BaseModel):
+class ButtonData(BaseModel):
     type: str
     value: str
+
+class ExpenseModel(Expense):
+    id: int  # telegram message id, unique per chat
 
 def is_allowed(chat_id: int) -> bool:
     return (not ALLOWED) or (chat_id in ALLOWED)
@@ -52,7 +55,7 @@ async def button_cb(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     await query.answer()
     data = None
     try:
-        data = QueryData.model_validate_json(query.data)
+        data = ButtonData.model_validate_json(query.data)
     except ValidationError:
         log.error("Invalid callback data: %s", query.data)
         return
@@ -77,8 +80,22 @@ async def non_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"EDIT of message_id={msg_id} at {msg.edit_date}. Not implemented yet."
         )
     elif update.message or update.channel_post:
-        arguments = get_message_args(msg.text, msg.date)
-        
+        try:
+            arguments = get_message_args(msg.text, msg.date)
+        except ValueError as e:
+            await msg.reply_text(str(e))
+            return
+        expense = ExpenseModel(
+            id=msg_id,
+            amount=arguments.amount,
+            description=arguments.description,
+            type=arguments.type,
+            category=arguments.category,
+            date=arguments.date)
+
+        await msg.reply_text(
+            f"Received message_id={msg_id} at {msg.date} with args:\n{expense}"
+        )
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
