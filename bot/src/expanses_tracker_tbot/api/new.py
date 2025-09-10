@@ -1,6 +1,7 @@
 import os, json, logging, re, shlex
 from typing import List
 from expanses_tracker_tbot.tools.message_parser import Expense, get_message_args
+from expanses_tracker_tbot.data import ExpenseRepository, DatabaseFactory, init_db
 from pydantic import BaseModel, ValidationError
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
@@ -15,13 +16,13 @@ ALLOWED = {
     int(x) for x in os.environ.get("ALLOWED_CHAT_IDS", "").split(",") if x.strip().isdigit()
 }
 
+# Initialize database
+init_db()
+
 # TODO add reference to entry
 class ButtonData(BaseModel):
     type: str
     value: str
-
-class ExpenseModel(Expense):
-    id: int  # telegram message id, unique per chat
 
 def is_allowed(chat_id: int) -> bool:
     return (not ALLOWED) or (chat_id in ALLOWED)
@@ -37,10 +38,15 @@ async def ensure_access(update: Update) -> bool:
 async def cmd_start(update: Update, _: ContextTypes.DEFAULT_TYPE):
     if not await ensure_access(update):
         return
-    await update.message.reply_text( # TODO: change message
-        "Hi! I can restart your Docker service.\n\n"
+    await update.message.reply_text(
+        "Hi! I'm your Expense Tracker Bot.\n\n"
+        "Send me expenses in this format:\n"
+        "- <amount> <description> [category] [type] [date]\n\n"
+        "Examples:\n"
+        "10 groceries food need\n"
+        "25.50 restaurant food want 15/09\n"
+        "100/2 shared bill\n\n"
         "Commands:\n"
-        "/whoami - show your chat id\n"
         "/authorized - check authorization status"
     )
 
@@ -85,25 +91,55 @@ async def non_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except ValueError as e:
             await msg.reply_text(str(e))
             return
-        expense = ExpenseModel(
-            id=msg_id,
-            amount=arguments.amount,
-            description=arguments.description,
-            type=arguments.type,
-            category=arguments.category,
-            date=arguments.date)
+            
+        # Get chat ID
+        chat_id = update.effective_chat.id
+        
+        # Save expense to database
+        session = DatabaseFactory.get_session()
+        try:
+            expense = ExpenseRepository.create_expense(
+                session=session,
+                expense=arguments,
+                message_id=msg_id,
+                chat_id=chat_id
+            )
+            
+            await msg.reply_text(
+                f"Expense saved with ID={msg_id} at {msg.date}:\n"
+                f"Amount: {expense.amount}\n"
+                f"Description: {expense.description}\n"
+                f"Type: {expense.type or 'Not specified'}\n"
+                f"Category: {expense.category or 'Not specified'}\n"
+                f"Date: {expense.date.strftime('%Y-%m-%d')}"
+            )
+        except Exception as e:
+            log.error(f"Error saving expense: {str(e)}")
+            await msg.reply_text(f"Error saving expense: {str(e)}")
+        finally:
+            session.close()
 
-        await msg.reply_text(
-            f"Received message_id={msg_id} at {msg.date} with args:\n{expense}"
-        )
+
 
 def main():
+    # Initialize database
+    log.info("Initializing database...")
+    try:
+        engine_name = DatabaseFactory.get_engine_name()
+        log.info(f"Using database engine: {engine_name}")
+    except ValueError as e:
+        log.error(f"Database configuration error: {e}")
+        raise
+    
+    # Initialize Telegram bot
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("authorized", cmd_authorized))
     app.add_handler(MessageHandler(~filters.COMMAND, non_command), group=1)
     # app.add_handler(CommandHandler("new", cmd_new)) # TODO to set
     app.add_handler(CallbackQueryHandler(button_cb))
+    
+    log.info("Bot initialized, starting polling...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":

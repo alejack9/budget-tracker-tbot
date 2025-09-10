@@ -1,5 +1,6 @@
 # ---- Builder -----------------------------------------------------------------
-FROM python:3.12-slim AS builder
+# Use a builder image with Python and common development dependencies
+FROM python:3.12 AS builder
 
 ENV PIP_NO_CACHE_DIR=1 \
     POETRY_VERSION=">=2.0.0,<3.0.0" \
@@ -8,11 +9,6 @@ ENV PIP_NO_CACHE_DIR=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
-
-# System deps for building wheels (add more if your deps need them)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential curl && \
-    rm -rf /var/lib/apt/lists/*
 
 # Install Poetry 2.x
 RUN python -m pip install --upgrade pip && \
@@ -28,14 +24,17 @@ COPY . .
 RUN poetry build -f wheel
 
 # ---- Runtime -----------------------------------------------------------------
-FROM python:3.12-slim AS runtime
+# Use a full Python image that already includes many development packages
+FROM python:3.12 AS runtime
 
 ENV PIP_NO_CACHE_DIR=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# (Optional) install OS runtime deps your app needs
-# RUN apt-get update && apt-get install -y --no-install-recommends ... && rm -rf /var/lib/apt/lists/*
+# Install additional database client tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client default-mysql-client && \
+    rm -rf /var/lib/apt/lists/*
 
 # Non-root user
 RUN adduser --disabled-password --gecos "" --uid 10001 app
@@ -49,4 +48,6 @@ RUN python -m pip install --upgrade pip && \
 
 USER app
 
-CMD ["python", "-m", "expanses_tracker_tbot.main"]
+COPY entrypoint.sh /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]
