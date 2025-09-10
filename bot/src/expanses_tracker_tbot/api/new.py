@@ -1,6 +1,6 @@
 import os, json, logging, re, shlex
 from typing import List
-from expanses_tracker_tbot.message_parser import Expense, get_message_args
+from expanses_tracker_tbot.tools.message_parser import Expense, get_message_args
 from pydantic import BaseModel, ValidationError
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters

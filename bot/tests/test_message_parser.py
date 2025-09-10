@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from expanses_tracker_tbot.message_parser import get_message_args, get_message_category, __get_message_date, __get_message_type
+from expanses_tracker_tbot.tools.message_parser import get_message_args, get_message_category, __get_message_date, __get_message_type
 import pytest
 
 # ---------- get_message_date ----------
