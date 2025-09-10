@@ -46,8 +46,13 @@ RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir /tmp/dist/*.whl && \
     rm -r /tmp/dist/
 
-USER app
+# Copy alembic files
+COPY --chown=app:app alembic /app/alembic
+COPY --chown=app:app alembic.ini /app/alembic.ini
+COPY --chown=app:app entrypoint.sh /app/entrypoint.sh
 
-COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+USER app
 
 CMD ["/app/entrypoint.sh"]

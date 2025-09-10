@@ -19,8 +19,8 @@ class ExpenseModel(Base):
     category = Column(String(50), nullable=True)
     date = Column(DateTime, nullable=False)
     chat_id = Column(Integer, nullable=False)  # To ensure uniqueness across chats
-    created_at = Column(DateTime, default=datetime.now(datetime.timezone.utc))
-    updated_at = Column(DateTime, default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
         return (f"<Expense(id={self.id}, amount={self.amount}, "

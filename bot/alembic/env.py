@@ -16,10 +16,17 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 # This imports the models, making them available for Alembic
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.expanses_tracker_tbot.data.models import Base
-from src.expanses_tracker_tbot.data.database import DatabaseFactory
+# Try to import from both installed package and source directory
+try:
+    # First try installed package
+    from expanses_tracker_tbot.data.models import Base
+    from expanses_tracker_tbot.data.database import DatabaseFactory
+except ImportError:
+    # Fall back to source directory
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    from src.expanses_tracker_tbot.data.models import Base
+    from src.expanses_tracker_tbot.data.database import DatabaseFactory
 
 target_metadata = Base.metadata
 
