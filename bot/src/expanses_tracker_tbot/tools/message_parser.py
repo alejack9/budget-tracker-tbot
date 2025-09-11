@@ -13,6 +13,7 @@ class Expense(BaseModel):
     type: Optional[str] = None
     category: Optional[str] = None
     date: datetime
+    deleted_at: Optional[datetime] = None
 
 
 def __get_message_date(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:

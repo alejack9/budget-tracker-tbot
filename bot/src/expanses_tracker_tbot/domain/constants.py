@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 
@@ -18,3 +19,5 @@ CATEGORIES: List[str] = [
 ]
 
 TYPES: List[str] = ["need", "want", "goal"]
+
+UNDO_GRACE_SECONDS = int(os.environ.get("UNDO_GRACE_SECONDS", "10"))
