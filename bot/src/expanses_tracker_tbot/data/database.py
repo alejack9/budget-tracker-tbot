@@ -1,6 +1,6 @@
 import os
 from typing import Optional, Dict, Any
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -42,10 +42,11 @@ class DatabaseFactory:
         )
 
     @classmethod
-    def create_engine_with_args(cls, **kwargs) -> Any:
+    def create_engine_with_args(cls, **kwargs) -> Engine:
         """Create a SQLAlchemy engine with custom arguments"""
         conn_url = cls.get_connection_url()
-        return create_engine(conn_url, **kwargs)
+        to_return = create_engine(conn_url, **kwargs)
+        return to_return
 
     @classmethod
     def init_db(cls, **engine_kwargs) -> None:
@@ -61,6 +62,9 @@ class DatabaseFactory:
     @classmethod
     def create_tables(cls) -> None:
         """Create all tables defined in the models"""
+        # if engine is none, throw an error asking to init db first
+        if cls.__engine is None:
+            raise ValueError("Database engine is not initialized. Call init_db() first.")
         Base.metadata.create_all(cls.__engine)
 
     @classmethod

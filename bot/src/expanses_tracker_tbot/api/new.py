@@ -1,10 +1,9 @@
-import os, json, logging, re, shlex
-from typing import List
-from expanses_tracker_tbot.tools.message_parser import Expense, get_message_args
+import os, logging
+from expanses_tracker_tbot.tools.message_parser import get_message_args
 from expanses_tracker_tbot.data import ExpenseRepository, DatabaseFactory, init_db
 from pydantic import BaseModel, ValidationError
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram import Update
+from telegram.ext import CommandHandler, MessageHandler, ContextTypes, filters
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 
 logging.basicConfig(level=logging.INFO)
@@ -136,7 +135,6 @@ def main():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("authorized", cmd_authorized))
     app.add_handler(MessageHandler(~filters.COMMAND, non_command), group=1)
-    # app.add_handler(CommandHandler("new", cmd_new)) # TODO to set
     app.add_handler(CallbackQueryHandler(button_cb))
     
     log.info("Bot initialized, starting polling...")

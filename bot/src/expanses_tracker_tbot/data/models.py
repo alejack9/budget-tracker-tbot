@@ -1,10 +1,8 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, Float, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
-
-Base = declarative_base()
+from expanses_tracker_tbot.data.database import Base
 
 
 class ExpenseModel(Base):
