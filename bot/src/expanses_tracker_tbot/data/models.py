@@ -19,7 +19,7 @@ class ExpenseModel(Base):
     chat_id = Column(Integer, primary_key=True)  # Part of composite primary key with msg_id
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    # deleted_at = Column(DateTime, nullable=True)  # Timestamp for soft deletion
+    deleted_at = Column(DateTime, nullable=True)  # Timestamp for soft deletion
 
     def __repr__(self):
         return (f"<Expense(msg_id={self.msg_id}, chat_id={self.chat_id}, amount={self.amount}, "
