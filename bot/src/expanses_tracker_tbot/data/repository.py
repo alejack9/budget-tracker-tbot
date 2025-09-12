@@ -98,7 +98,7 @@ class ExpenseRepository:
         return db_expense
 
     @staticmethod
-    def soft_delete(session, chat_id: int, message_id: int, user_id: int) -> bool:
+    def soft_delete(session, message_id: int, chat_id: int, user_id: int) -> bool:
         """Set deleted_at=now if owned by user_id and not already deleted. Return True if changed."""
         exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id)
         if not exp:

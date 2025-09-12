@@ -185,7 +185,7 @@ async def cmd_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Delete expense from database
     session = DatabaseFactory.get_session()
     try:
-        success = ExpenseRepository.soft_delete_expense(session, message_id, chat_id)
+        success = ExpenseRepository.soft_delete(session, message_id, chat_id, update.effective_user.id if update.effective_user else 0)
         if not success:
             await update.message.reply_text(f"No expense found with ID={message_id}.")
         
