@@ -1,28 +1,30 @@
 import os, logging
+from typing import Literal, Optional
 from expanses_tracker_tbot.domain.constants import UNDO_GRACE_SECONDS
 from expanses_tracker_tbot.tools.message_parser import get_message_args
 from expanses_tracker_tbot.data import ExpenseRepository, DatabaseFactory, init_db
 from pydantic import BaseModel, ValidationError
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import CommandHandler, MessageHandler, ContextTypes, filters
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("expanses-tracker-tbot")
+logging.getLogger("httpx").setLevel(logging.WARNING)
+log = logging.getLogger(__name__)
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 # Comma-separated list of numeric chat IDs allowed to use the bot
-ALLOWED = {
-    int(x) for x in os.environ.get("ALLOWED_CHAT_IDS", "").split(",") if x.strip().isdigit()
-}
+ALLOWED = { int(x) for x in os.environ.get("ALLOWED_CHAT_IDS", "").split(",") if x.strip().isdigit() }
 
 # Initialize database
 init_db()
 
-# TODO add reference to entry
-class ButtonData(BaseModel):
-    type: str
-    value: str
+class BtnCallbackData(BaseModel):
+    action: str = Literal['delete', 'restore', 'update']
+    message_id: int
+    chat_id: int
+    type: Optional[str] = None
+    value: Optional[str] = None
 
 def ensure_access_guard(func):
     async def __wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -59,35 +61,7 @@ async def cmd_start(update: Update, _: ContextTypes.DEFAULT_TYPE):
         "/authorized - check authorization status"
     )
 
-@ensure_access_guard
-async def button_cb(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
-    """Parses the CallbackQuery and updates the message text."""
-    query = update.callback_query
-
-    await query.answer()
-    data = None
-    try:
-        data = ButtonData.model_validate_json(query.data)
-    except ValidationError:
-        log.error("Invalid callback data: %s", query.data)
-        return
-
-    await query.edit_message_text(text=f"Selected {data.type}: {data.value}")
-
-# valid strings formats:
-# - 10 spesa casa food need -> type: need, category: food, amount: 10, description: spesa casa
-# - 10.5 spesa casa food need -> type: need, category: food, amount: 10.5, description: spesa casa
-# - 10.50 spesa casa food need -> type: need, category: food, amount: 10.50, description: spesa casa
-# - 10 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa
-# - 10/2 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 5 (10/2), description: spesa
-# - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
-# - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
-@ensure_access_guard
-async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg_id = update.effective_message.message_id
-    msg = update.effective_message  # message/channel_post/edited_* whichever exists
-
-    if update.edited_message or update.edited_channel_post:
+async def update_expense(msg: Message, msg_id: int, update: Update):
         try:
             arguments = get_message_args(msg.text, msg.edit_date)
         except ValueError as e:
@@ -96,6 +70,7 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
             return
         # Get chat ID
         chat_id = update.effective_chat.id
+        user_id = update.effective_user.id if update.effective_user else 0
         # Update expense in database
         session = DatabaseFactory.get_session()
         try:
@@ -103,6 +78,7 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
                 session=session,
                 message_id=msg_id,
                 chat_id=chat_id,
+                user_id=user_id,
                 updated_data={
                     "amount": arguments.amount,
                     "description": arguments.description,
@@ -135,7 +111,7 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
         finally:
             session.close()
 
-    elif update.message or update.channel_post:
+async def create_expense(msg: Message, msg_id: int, update: Update):
         try:
             arguments = get_message_args(msg.text, msg.date)
         except ValueError as e:
@@ -144,6 +120,7 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
             
         # Get chat ID
         chat_id = update.effective_chat.id
+        user_id = update.effective_user.id if update.effective_user else 0
         
         # Save expense to database
         session = DatabaseFactory.get_session()
@@ -152,16 +129,24 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
                 session=session,
                 expense=arguments,
                 message_id=msg_id,
-                chat_id=chat_id
+                chat_id=chat_id,
+                user_id=user_id
             )
-            
-            await msg.reply_text(
+            del_btn = InlineKeyboardButton(
+                text="🗑️ Delete",
+                callback_data=BtnCallbackData(
+                    action="delete",
+                    chat_id=chat_id,
+                    message_id=msg_id).model_dump_json(),
+            )
+            notice = await update.message.reply_text(
                 f"Expense saved with ID={msg_id} at {msg.date}:\n"
                 f"Amount: {expense.amount}\n"
                 f"Description: {expense.description}\n"
                 f"Type: {expense.type or 'Not specified'}\n"
                 f"Category: {expense.category or 'Not specified'}\n"
                 f"Date: {expense.date.strftime('%Y-%m-%d')}",
+                reply_markup=InlineKeyboardMarkup([[del_btn]]),
                 reply_to_message_id=msg.message_id
             )
         except Exception as e:
@@ -173,26 +158,39 @@ async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_
         finally:
             session.close()
 
+# valid strings formats:
+# - 10 spesa casa food need -> type: need, category: food, amount: 10, description: spesa casa
+# - 10.5 spesa casa food need -> type: need, category: food, amount: 10.5, description: spesa casa
+# - 10.50 spesa casa food need -> type: need, category: food, amount: 10.50, description: spesa casa
+# - 10 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa
+# - 10/2 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 5 (10/2), description: spesa
+# - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
+# - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
 @ensure_access_guard
-async def cmd_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # get message ID of the replied message
-    if not update.message.reply_to_message:
-        await update.message.reply_text("Please reply to the message of the expense you want to delete.")
-        return
-    # get chat ID
-    chat_id = update.effective_chat.id
-    message_id = update.message.reply_to_message.message_id
+async def generic_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg_id = update.effective_message.message_id
+    msg = update.effective_message  # message/channel_post/edited_* whichever exists
+
+    if update.edited_message or update.edited_channel_post:
+        await update_expense(msg, msg_id, update)
+    elif update.message or update.channel_post:
+        await create_expense(msg, msg_id, update)
+
+async def soft_delete_expense(message_id: int, chat_id: int, user_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Delete expense from database
     session = DatabaseFactory.get_session()
     try:
-        success = ExpenseRepository.soft_delete(session, message_id, chat_id, update.effective_user.id if update.effective_user else 0)
+        success = ExpenseRepository.soft_delete(session, message_id, chat_id, user_id)
         if not success:
             await update.message.reply_text(f"No expense found with ID={message_id}.")
         
         # Post a short-lived Restore notice with an inline button
         btn = InlineKeyboardButton(
             text="↩️ Restore",
-            callback_data=ButtonData(type="restore", value=f"{chat_id}:{message_id}").model_dump_json(),
+            callback_data=BtnCallbackData(
+                action="restore",
+                chat_id=chat_id,
+                message_id=message_id).model_dump_json(),
         )
         notice = await update.message.reply_text(
             f"Deleted. Tap to restore ({UNDO_GRACE_SECONDS}s).",
@@ -214,29 +212,38 @@ async def cmd_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
         session.close()
 
 @ensure_access_guard
+async def cmd_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # get message ID of the replied message
+    if not update.message.reply_to_message:
+        await update.message.reply_text("Please reply to the message of the expense you want to delete.")
+        return
+    # get chat ID
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id if update.effective_user else 0
+    # get message ID
+    message_id = update.message.reply_to_message.message_id
+    await soft_delete_expense(message_id, chat_id, user_id, update, context)
+
+@ensure_access_guard
 async def button_cb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
     try:
-        data = ButtonData.model_validate_json(query.data)
+        data = BtnCallbackData.model_validate_json(query.data)
     except ValidationError:
         log.error("Invalid callback data: %s", query.data)
         return
-
-    if data.type == "restore":
-        # value format: "<chat_id>:<message_id>"
+    uid = update.effective_user.id if update.effective_user else 0
+    if data.action == "restore":
         try:
-            chat_id_str, msg_id_str = data.value.split(":")
-            chat_id = int(chat_id_str)
-            target_id = int(msg_id_str)
+            chat_id = data.chat_id
+            msg_id = data.message_id
         except Exception:
             await query.answer("Invalid restore data.", show_alert=True)
             return
-
-        uid = update.effective_user.id if update.effective_user else 0
         session = DatabaseFactory.get_session()
         try:
-            restored = ExpenseRepository.restore(session, chat_id=chat_id, message_id=target_id, user_id=uid)
+            restored = ExpenseRepository.restore(session, chat_id=chat_id, message_id=msg_id, user_id=uid)
             if restored:
                 await query.answer("Restored")
                 try:
@@ -252,10 +259,24 @@ async def button_cb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         finally:
             session.close()
         return
-
-    # default/fallback (your existing behavior)
-    await query.edit_message_text(text=f"Selected {data.type}: {data.value}")
-
+    elif data.action == "delete":
+        chat_id = data.chat_id
+        message_id = data.message_id
+        await soft_delete_expense(message_id, chat_id, uid, update, context)
+        return
+    elif data.action == "update":
+        await query.answer()
+        data = None
+        try:
+            data = BtnCallbackData.model_validate_json(query.data)
+        except ValidationError:
+            log.error("Invalid callback data: %s", query.data)
+            return
+        await query.edit_message_text(text=f"Selected {data.type}: {data.value}")
+    else:
+        log.error("Unknown action in data: %s", data)
+        await query.answer(f"Unknown action. Data: {data}", show_alert=True)
+    
 async def delete_notice_job(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     chat_id = job.data["chat_id"]
