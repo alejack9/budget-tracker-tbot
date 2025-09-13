@@ -16,7 +16,8 @@ class ExpenseRepository:
         session: Session, 
         expense: Expense, 
         message_id: int,
-        chat_id: int
+        chat_id: int,
+        user_id: int
     ) -> ExpenseModel:
         """
         Create a new expense record in the database
@@ -26,7 +27,8 @@ class ExpenseRepository:
             expense: Expense data
             message_id: Telegram message ID
             chat_id: Telegram chat ID
-            
+            user_id: Telegram user ID
+
         Returns:
             The created ExpenseModel instance
         """
@@ -37,7 +39,8 @@ class ExpenseRepository:
             type=expense.type,
             category=expense.category,
             date=expense.date,
-            chat_id=chat_id
+            chat_id=chat_id,
+            user_id=user_id
         )
         session.add(db_expense)
         session.commit()
@@ -45,7 +48,7 @@ class ExpenseRepository:
         return db_expense
     
     @staticmethod
-    def get_expense_by_id(session: Session, message_id: int, chat_id: int, include_deleted: bool = False) -> Optional[ExpenseModel]:
+    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseModel]:
         """
         Get an expense by its message ID and chat ID
         
@@ -59,17 +62,19 @@ class ExpenseRepository:
         """
         q = session.query(ExpenseModel).filter(
             ExpenseModel.msg_id == message_id,
-            ExpenseModel.chat_id == chat_id
+            ExpenseModel.chat_id == chat_id,
+            ExpenseModel.user_id == user_id
         )
         if not include_deleted:
-            q = q.filter(Expense.deleted_at.is_(None))
+            q = q.filter(ExpenseModel.deleted_at.is_(None))
         return q.first()
 
     @staticmethod
     def update_expense(
         session: Session, 
         message_id: int, 
-        chat_id: int, 
+        chat_id: int,
+        user_id: int,
         updated_data: Dict[str, Any]
     ) -> Optional[ExpenseModel]:
         """
@@ -79,12 +84,13 @@ class ExpenseRepository:
             session: Database session
             message_id: Telegram message ID
             chat_id: Telegram chat ID
+            user_id: Telegram user ID
             updated_data: Dictionary with fields to update
             
         Returns:
             Updated ExpenseModel if found, None otherwise
         """
-        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id)
+        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
         if not db_expense:
             return None
             
@@ -100,7 +106,7 @@ class ExpenseRepository:
     @staticmethod
     def soft_delete(session, message_id: int, chat_id: int, user_id: int) -> bool:
         """Set deleted_at=now if owned by user_id and not already deleted. Return True if changed."""
-        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id)
+        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
         if not exp:
             return False
         if exp.user_id != user_id:
@@ -114,7 +120,7 @@ class ExpenseRepository:
     @staticmethod
     def restore(session, chat_id: int, message_id: int, user_id: int) -> bool:
         """If deleted_at is within UNDO_GRACE_SECONDS, clear it. Return True if restored."""
-        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id)
+        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not exp or exp.user_id != user_id or exp.deleted_at is None:
             return False
         now = datetime.now(timezone.utc)
@@ -125,7 +131,7 @@ class ExpenseRepository:
         return True
     
     @staticmethod
-    def delete_expense(session: Session, message_id: int, chat_id: int) -> bool:
+    def delete_expense(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
         """
         Delete an expense record
         
@@ -133,30 +139,15 @@ class ExpenseRepository:
             session: Database session
             message_id: Telegram message ID
             chat_id: Telegram chat ID
-            
+            user_id: Telegram user ID
+
         Returns:
             True if deleted, False if not found
         """
-        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id)
+        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
         if not db_expense:
             return False
             
         session.delete(db_expense)
         session.commit()
         return True
-    
-    @staticmethod
-    def get_all_expenses(session: Session, chat_id: int) -> List[ExpenseModel]:
-        """
-        Get all expenses for a chat
-        
-        Args:
-            session: Database session
-            chat_id: Telegram chat ID
-            
-        Returns:
-            List of ExpenseModel instances
-        """
-        return session.query(ExpenseModel).filter(
-            ExpenseModel.chat_id == chat_id
-        ).order_by(ExpenseModel.date.desc()).all()

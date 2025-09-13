@@ -111,8 +111,9 @@ alembic current
 ## Data Model
 
 The main data model is `ExpenseModel` which represents an expense entry:
-
-- `id`: The message ID from Telegram (primary key)
+- `msg_id`: Telegram message ID
+- `chat_id`: Telegram chat ID
+- `user_id`: Telegram user ID
 - `amount`: The expense amount
 - `description`: Description of the expense
 - `type`: Type of expense (need, want, goal)
@@ -121,3 +122,4 @@ The main data model is `ExpenseModel` which represents an expense entry:
 - `chat_id`: Telegram chat ID
 - `created_at`: When the record was created
 - `updated_at`: When the record was last updated
+- `deleted_at`: When the record has been soft deleted
