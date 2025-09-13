@@ -47,7 +47,7 @@ RUN python -m pip install --upgrade pip && \
     rm -r /tmp/dist/
 
 # Copy alembic files
-COPY --chown=app:app alembic /app/alembic
+COPY --chown=app:app migrations /app/migrations
 COPY --chown=app:app alembic.ini /app/alembic.ini
 COPY --chown=app:app entrypoint.sh /app/entrypoint.sh
 
