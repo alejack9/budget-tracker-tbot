@@ -3,7 +3,7 @@ from pydantic_core import ValidationError
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import logging
-from expanses_tracker.application.features.add_or_edit_expense import generic_message_handler
+from expanses_tracker.application.features.add_or_edit_expense.generic_message_handler import generic_message_handler
 from expanses_tracker.application.features.delete_expense.delete_command_handler import delete_command_handler
 from expanses_tracker.application.models.button_data_dto import BTN_CALLBACKS, ButtonDataDto
 from expanses_tracker.application.utils.decorators import ensure_access_guard
