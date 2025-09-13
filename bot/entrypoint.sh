@@ -6,4 +6,4 @@ cd /app && alembic upgrade head
 
 # Start the application
 echo "Starting the bot..."
-exec python -m expanses_tracker_tbot.api.new
+exec python -m expanses_tracker_tbot.api.main
