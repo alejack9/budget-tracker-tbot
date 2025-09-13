@@ -1,10 +1,10 @@
 import logging
 from telegram import CallbackQuery, Update
-from bot.expanses_tracker.application.models.button_data_dto import ButtonDataDto
-from bot.expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
-from bot.expanses_tracker.application.utils.decorators import button_callback
-from bot.expanses_tracker.persistence.database_context.database import DatabaseFactory
-from bot.expanses_tracker.persistence.repositories.repository import ExpenseRepository
+from expanses_tracker.application.models.button_data_dto import ButtonDataDto
+from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
+from expanses_tracker.application.utils.decorators import button_callback
+from expanses_tracker.persistence.database_context.database import DatabaseFactory
+from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
 log = logging.getLogger(__name__)
 

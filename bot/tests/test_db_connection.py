@@ -6,11 +6,11 @@ import os
 import sys
 import logging
 
-from bot.expanses_tracker.persistence import persistence_registration
-from bot.expanses_tracker.persistence.configurations.expense_model import ExpenseModel
-from bot.expanses_tracker.persistence.database_context.database import DatabaseFactory
+from expanses_tracker.persistence import persistence_registration
+from expanses_tracker.persistence.configurations.expense_model import ExpenseModel
+from expanses_tracker.persistence.database_context.database import DatabaseFactory
 
-# Add the project directory to the Python path
+# Add the source root to Python path for local runs without installation
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Set up logging

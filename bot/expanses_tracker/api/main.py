@@ -2,23 +2,23 @@ import os, logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder
 
-from bot.expanses_tracker.application import application_registration
-from bot.expanses_tracker.persistence import persistence_registration
-from bot.expanses_tracker.persistence.database_context.database import DatabaseFactory
+from expanses_tracker.application import application_registration
+from expanses_tracker.persistence import persistence_registration
+from expanses_tracker.persistence.database_context.database import DatabaseFactory
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-
-# Initialize database
-persistence_registration()
-
 def main():
+    # Read bot token at runtime to avoid import-time failures
+    BOT_TOKEN = os.environ["BOT_TOKEN"]
+    
     # Initialize database
     log.info("Initializing database...")
     try:
+        # Run DB setup
+        persistence_registration()
         engine_name = DatabaseFactory.get_engine_name()
         log.info(f"Using database engine: {engine_name}")
     except ValueError as e:

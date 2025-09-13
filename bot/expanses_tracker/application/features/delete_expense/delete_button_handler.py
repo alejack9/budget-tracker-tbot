@@ -2,9 +2,9 @@ import logging
 from telegram import CallbackQuery, Update
 from telegram.ext import ContextTypes
 
-from bot.expanses_tracker.application.features.delete_expense.delete_command_handler import __soft_delete_expense__
-from bot.expanses_tracker.application.models.button_data_dto import ButtonDataDto
-from bot.expanses_tracker.application.utils.decorators import button_callback
+from expanses_tracker.application.features.delete_expense.delete_command_handler import __soft_delete_expense__
+from expanses_tracker.application.models.button_data_dto import ButtonDataDto
+from expanses_tracker.application.utils.decorators import button_callback
 
 log = logging.getLogger(__name__)
 

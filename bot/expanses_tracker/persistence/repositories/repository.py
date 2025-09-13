@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
-from bot.expanses_tracker.application.models.expense_dto import ExpenseDto
-from bot.expanses_tracker.persistence.configurations.expense_model import ExpenseModel, ExpenseSchema
+from expanses_tracker.application.models.expense_dto import ExpenseDto
+from expanses_tracker.persistence.configurations.expense_model import ExpenseModel, ExpenseSchema
 
 class ExpenseRepository:
     """Repository class to handle database operations for ExpenseModel"""

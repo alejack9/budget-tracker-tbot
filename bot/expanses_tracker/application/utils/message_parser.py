@@ -3,7 +3,7 @@ import re
 import shlex
 from typing import Optional
 
-from bot.expanses_tracker.application.models.expense_dto import ExpenseDto
+from expanses_tracker.application.models.expense_dto import ExpenseDto
 
 def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:
     """Extract date from the last element of parts if it matches d/m or d/m/yyyy format."""

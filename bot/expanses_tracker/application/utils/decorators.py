@@ -2,7 +2,7 @@ import os, logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from bot.expanses_tracker.application.models.button_data_dto import BTN_CALLBACKS
+from expanses_tracker.application.models.button_data_dto import BTN_CALLBACKS
 
 log = logging.getLogger(__name__)
 

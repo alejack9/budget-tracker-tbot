@@ -1,9 +1,9 @@
 import logging
 from telegram import Message, Update
 
-from bot.expanses_tracker.application.utils.message_parser import get_message_args
-from bot.expanses_tracker.persistence.database_context.database import DatabaseFactory
-from bot.expanses_tracker.persistence.repositories.repository import ExpenseRepository
+from expanses_tracker.application.utils.message_parser import get_message_args
+from expanses_tracker.persistence.database_context.database import DatabaseFactory
+from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
 log = logging.getLogger(__name__)
 

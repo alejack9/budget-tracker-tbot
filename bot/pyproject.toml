@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "*", from = "expanses_tracker"}]
+packages = [{ include = "expanses_tracker", from = "." }]
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.8"

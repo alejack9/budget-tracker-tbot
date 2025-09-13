@@ -3,9 +3,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 import logging
 
-from bot.expanses_tracker.application.features.add_or_edit_expense.add_expense.add_handler import add_handler
-from bot.expanses_tracker.application.features.add_or_edit_expense.edit_expense.edit_handler import edit_handler
-from bot.expanses_tracker.application.utils.decorators import ensure_access_guard
+from expanses_tracker.application.features.add_or_edit_expense.add_expense.add_handler import add_handler
+from expanses_tracker.application.features.add_or_edit_expense.edit_expense.edit_handler import edit_handler
+from expanses_tracker.application.utils.decorators import ensure_access_guard
 
 log = logging.getLogger(__name__)
 
