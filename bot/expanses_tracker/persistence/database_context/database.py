@@ -1,12 +1,7 @@
 import os
-from typing import Optional, Dict, Any
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-
-# Base class for all models
-Base = declarative_base()
-
+from bot.expanses_tracker.persistence.configurations.expense_model import Base
 
 class DatabaseFactory:
     """Factory class to create database connections based on environment variables"""

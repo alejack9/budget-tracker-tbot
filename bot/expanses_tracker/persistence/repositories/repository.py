@@ -1,12 +1,9 @@
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
-from expanses_tracker_tbot.domain.constants import UNDO_GRACE_SECONDS
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
-from expanses_tracker_tbot.data.database import DatabaseFactory
-from expanses_tracker_tbot.data.models import ExpenseModel
-from expanses_tracker_tbot.tools.message_parser import Expense
-
+from bot.expanses_tracker.application.models.expense_dto import ExpenseDto
+from bot.expanses_tracker.persistence.configurations.expense_model import ExpenseModel, ExpenseSchema
 
 class ExpenseRepository:
     """Repository class to handle database operations for ExpenseModel"""
@@ -14,7 +11,7 @@ class ExpenseRepository:
     @staticmethod
     def create_expense(
         session: Session, 
-        expense: Expense, 
+        expense: ExpenseDto, 
         message_id: int,
         chat_id: int,
         user_id: int
@@ -48,7 +45,7 @@ class ExpenseRepository:
         return db_expense
     
     @staticmethod
-    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseModel]:
+    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseSchema]:
         """
         Get an expense by its message ID and chat ID
         
@@ -67,7 +64,8 @@ class ExpenseRepository:
         )
         if not include_deleted:
             q = q.filter(ExpenseModel.deleted_at.is_(None))
-        return q.first()
+        to_return = q.first()
+        return None if to_return is None else ExpenseSchema.model_validate(to_return)
 
     @staticmethod
     def update_expense(
@@ -76,7 +74,7 @@ class ExpenseRepository:
         chat_id: int,
         user_id: int,
         updated_data: Dict[str, Any]
-    ) -> Optional[ExpenseModel]:
+    ) -> Optional[ExpenseSchema]:
         """
         Update an expense record
         
@@ -101,7 +99,7 @@ class ExpenseRepository:
                 
         session.commit()
         session.refresh(db_expense)
-        return db_expense
+        return ExpenseSchema.model_validate(db_expense)
 
     @staticmethod
     def soft_delete(session, message_id: int, chat_id: int, user_id: int) -> bool:
@@ -118,13 +116,13 @@ class ExpenseRepository:
         return True
 
     @staticmethod
-    def restore(session, chat_id: int, message_id: int, user_id: int) -> bool:
-        """If deleted_at is within UNDO_GRACE_SECONDS, clear it. Return True if restored."""
+    def restore(session, chat_id: int, message_id: int, user_id: int, undo_grace_seconds: int) -> bool:
+        """If deleted_at is within undo_grace_seconds, clear it. Return True if restored."""
         exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not exp or exp.user_id != user_id or exp.deleted_at is None:
             return False
         now = datetime.now(timezone.utc)
-        if (now - exp.deleted_at).total_seconds() > UNDO_GRACE_SECONDS:
+        if (now - exp.deleted_at).total_seconds() > undo_grace_seconds:
             return False
         exp.deleted_at = None
         session.commit()

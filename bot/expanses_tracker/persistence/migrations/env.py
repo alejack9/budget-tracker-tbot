@@ -22,13 +22,13 @@ if db_url:
 
 try:
     # First try installed package
-    from expanses_tracker_tbot.data.models import Base
+    from bot.expanses_tracker.persistence.configurations.base import Base
 except ImportError:
     # Fall back to source directory
     import sys
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-    from src.expanses_tracker_tbot.data.models import Base
-from expanses_tracker_tbot.data import Base
+    from bot.expanses_tracker.persistence.configurations.base import Base
+from bot.expanses_tracker.persistence.configurations.base import Base
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

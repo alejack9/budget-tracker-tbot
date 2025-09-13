@@ -2,21 +2,10 @@ from datetime import datetime
 import re
 import shlex
 from typing import Optional
-from pydantic import BaseModel
-from expanses_tracker_tbot.domain.constants import CATEGORIES, TYPES
 
+from bot.expanses_tracker.application.models.expense_dto import ExpenseDto
 
-class Expense(BaseModel):
-    """Model representing the arguments extracted from a message."""
-    amount: float
-    description: str
-    type: Optional[str] = None
-    category: Optional[str] = None
-    date: datetime
-    deleted_at: Optional[datetime] = None
-
-
-def __get_message_date(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:
+def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:
     """Extract date from the last element of parts if it matches d/m or d/m/yyyy format."""
     msg_dt = default_date
     date_token = parts[-1]
@@ -33,7 +22,7 @@ def __get_message_date(parts: list[str], default_date: datetime) -> tuple[dateti
             raise ValueError("Ambiguous command. Invalid date.")
     return [to_return, parts]
 
-def __get_message_domain(parts: list[str], domain: list[str]) -> tuple[Optional[str], list[str]]:
+def __get_message_domain__(parts: list[str], domain: list[str]) -> tuple[Optional[str], list[str]]:
     """Extract type from the last element of parts if it matches a known type."""
     to_return = None
     if parts and parts[-1].lower() in domain:
@@ -42,10 +31,10 @@ def __get_message_domain(parts: list[str], domain: list[str]) -> tuple[Optional[
     return [to_return, parts]
 
 def __get_message_type(parts: list[str]) -> tuple[Optional[str], list[str]]:
-    return __get_message_domain(parts, TYPES)
+    return __get_message_domain__(parts, TYPES)
 
-def get_message_category(parts: list[str]) -> tuple[Optional[str], list[str]]:
-    return __get_message_domain(parts, CATEGORIES)
+def __get_message_category__(parts: list[str]) -> tuple[Optional[str], list[str]]:
+    return __get_message_domain__(parts, CATEGORIES)
 
 # valid strings formats:
 # - 10 spesa casa food need -> type: need, category: food, amount: 10, description: spesa casa
@@ -55,17 +44,17 @@ def get_message_category(parts: list[str]) -> tuple[Optional[str], list[str]]:
 # - 10/2 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 5 (10/2), description: spesa
 # - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
 # - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
-def get_message_args(text: str, date: datetime) -> Expense:
+def get_message_args(text: str, date: datetime) -> ExpenseDto:
     parts = shlex.split(text)
     if not parts:
         raise ValueError("Ambiguous command. Not enough parameters.")
     
     # Extract date
-    out_date, parts = __get_message_date(parts, date)
+    out_date, parts = __get_message_date__(parts, date)
     
     # Extract type and category
     out_type, parts = __get_message_type(parts)
-    out_cat, parts = get_message_category(parts)
+    out_cat, parts = __get_message_category__(parts)
     
     if len(parts) < 2:
         raise ValueError("Ambiguous command. Not enough parameters.")
@@ -93,7 +82,7 @@ def get_message_args(text: str, date: datetime) -> Expense:
         raise ValueError("Ambiguous command. Invalid amount.")
     
     # Create and return the MessageArgs model instance
-    return Expense(
+    return ExpenseDto(
         amount=out_amount,
         description=out_desc,
         type=out_type,

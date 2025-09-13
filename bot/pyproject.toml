@@ -1,5 +1,5 @@
 [project]
-name = "expanses-tracker-tbot"
+name = "expanses_tracker"
 version = "0.1.0"
 description = "Expanses tracker telegram bot"
 authors = [
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "expanses_tracker_tbot", from = "src"}]
+packages = [{include = "*", from = "expanses_tracker"}]
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.8"

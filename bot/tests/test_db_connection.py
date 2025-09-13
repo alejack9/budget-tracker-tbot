@@ -6,10 +6,12 @@ import os
 import sys
 import logging
 
+from bot.expanses_tracker.persistence import persistence_registration
+from bot.expanses_tracker.persistence.configurations.expense_model import ExpenseModel
+from bot.expanses_tracker.persistence.database_context.database import DatabaseFactory
+
 # Add the project directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.expanses_tracker_tbot.data import DatabaseFactory, ExpenseModel, init_db
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +30,7 @@ def test_db_connection():
         logger.info(f"Using database engine: {engine_name}")
         
         # Initialize the database
-        init_db()
+        persistence_registration()
         logger.info("Database connection successful!")
         
         # Create a session and test a query

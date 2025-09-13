@@ -1,7 +1,6 @@
 import os
 from typing import List
 
-
 CATEGORIES: List[str] = [
     "food",
     "gifts",
