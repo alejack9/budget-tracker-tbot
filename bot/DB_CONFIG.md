@@ -1,10 +1,10 @@
+
 # Expense Tracker Database Configuration
 
 This project uses SQLAlchemy ORM to support multiple database backends:
 
 - SQLite (for development)
 - PostgreSQL (recommended for production)
-- MariaDB (alternative option)
 
 ## Configuration
 
@@ -40,15 +40,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/expenses
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/expenses?sslmode=require
 ```
 
-### MariaDB/MySQL
 
-```
-# MariaDB connection
-DATABASE_URL=mysql+mysqldb://root:password@localhost:3306/expenses
-
-# With character set and collation
-DATABASE_URL=mysql+mysqldb://root:password@localhost:3306/expenses?charset=utf8mb4
-```
 
 ## Docker Compose Configuration
 
@@ -71,14 +63,7 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_DB=expenses
 ```
 
-For MariaDB:
-```
-# MariaDB configuration
-DATABASE_URL=mysql+mysqldb://root:mariadb@db:3306/expenses
-DB_IMAGE=mariadb:11
-MYSQL_ROOT_PASSWORD=mariadb
-MYSQL_DATABASE=expenses
-```
+
 
 For SQLite (no external database service needed):
 ```

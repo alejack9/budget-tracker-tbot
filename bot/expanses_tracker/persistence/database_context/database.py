@@ -75,7 +75,7 @@ class DatabaseFactory:
         Get the database engine name from the connection URL
         
         Returns:
-            str: Database engine name (e.g., 'sqlite', 'postgresql', 'mysql')
+            str: Database engine name (e.g., 'sqlite', 'postgresql')
         """
         url = cls.get_connection_url()
         return url.split('://')[0].split('+')[0]
