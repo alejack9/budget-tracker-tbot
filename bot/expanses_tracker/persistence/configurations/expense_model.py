@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import Column, Integer, Float, String, DateTime
 from pydantic import BaseModel
-from expanses_tracker_tbot.data.database import Base
+from expanses_tracker.persistence.configurations.base import Base
 
 class ExpenseModel(Base):
     """SQLAlchemy model for an expense in the database"""

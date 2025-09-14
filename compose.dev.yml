@@ -1,0 +1,23 @@
+services:
+  bot:
+    build: ./bot
+    env_file: ./.env
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/expenses}
+
+  db:
+    image: ${DB_IMAGE:-postgres:16-alpine}
+    restart: unless-stopped
+    environment:
+      # Extract username/password/database from DATABASE_URL if possible,
+      # otherwise use defaults
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-expenses}
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

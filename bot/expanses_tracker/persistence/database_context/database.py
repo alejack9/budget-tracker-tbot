@@ -1,23 +1,17 @@
 import os
-from typing import Optional, Dict, Any
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-
-# Base class for all models
-Base = declarative_base()
-
+from sqlalchemy.orm import Session
+from expanses_tracker.persistence.configurations.expense_model import Base
 
 class DatabaseFactory:
     """Factory class to create database connections based on environment variables"""
-    
+
     # Connection settings
     __engine = None
-    __session_factory = None
-    
+
     # Environment variable name for database connection
     ENV_DB_URL = "DATABASE_URL"
-    
+
     @classmethod
     def get_connection_url(cls) -> str:
         """
@@ -34,7 +28,7 @@ class DatabaseFactory:
         """
         if direct_url := os.environ.get(cls.ENV_DB_URL):
             return direct_url
-        
+
         raise ValueError(
             f"The {cls.ENV_DB_URL} environment variable is required but was not set. "
             "Please set it to a valid SQLAlchemy connection string. "
@@ -53,11 +47,6 @@ class DatabaseFactory:
         """Initialize the database connection"""
         if cls.__engine is None:
             cls.__engine = cls.create_engine_with_args(**engine_kwargs)
-            cls.__session_factory = sessionmaker(
-                autocommit=False,
-                autoflush=False,
-                bind=cls.__engine
-            )
 
     @classmethod
     def create_tables(cls) -> None:
@@ -70,9 +59,10 @@ class DatabaseFactory:
     @classmethod
     def get_session(cls) -> Session:
         """Get a new database session"""
-        if cls.__session_factory is None:
+        if cls.__engine is None:
             cls.init_db()
-        return cls.__session_factory()
+        # Create a new Session bound to the engine
+        return Session(bind=cls.__engine, autoflush=False)
 
     @classmethod
     def get_engine_name(cls) -> str:
@@ -80,7 +70,7 @@ class DatabaseFactory:
         Get the database engine name from the connection URL
         
         Returns:
-            str: Database engine name (e.g., 'sqlite', 'postgresql', 'mysql')
+            str: Database engine name (e.g., 'sqlite', 'postgresql')
         """
         url = cls.get_connection_url()
         return url.split('://')[0].split('+')[0]
