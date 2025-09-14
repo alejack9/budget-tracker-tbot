@@ -1,15 +1,22 @@
+"""Message parsing utilities for the application."""
+
+import logging
 from datetime import datetime
 import re
 import shlex
 from typing import Optional
 
+from expanses_tracker.application.models.constants import CATEGORIES, TYPES
 from expanses_tracker.application.models.expense_dto import ExpenseDto
+
+log = logging.getLogger(__name__)
 
 def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:
     """Extract date from the last element of parts if it matches d/m or d/m/yyyy format."""
     msg_dt = default_date
     date_token = parts[-1]
-    date_match_candidate = re.fullmatch(r"(\d{1,2})/(\d{1,2})(?:/(\d{4}))?", date_token) # match d/m or d/m/yyyy
+    # match d/m or d/m/yyyy
+    date_match_candidate = re.fullmatch(r"(\d{1,2})/(\d{1,2})(?:/(\d{4}))?", date_token)
     to_return = default_date
     if date_match_candidate:
         day = int(date_match_candidate.group(1))
@@ -18,8 +25,10 @@ def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[date
         try:
             to_return = datetime(year, month, day)
             parts.pop() # remove the date part
-        except ValueError:
-            raise ValueError("Ambiguous command. Invalid date.")
+        except ValueError as e:
+            log.warning("Exception while parsing date from message: %s", e)
+            # Intentionally hide original cause from end users
+            raise ValueError("Ambiguous command. Invalid date.") from None
     return [to_return, parts]
 
 def __get_message_domain__(parts: list[str], domain: list[str]) -> tuple[Optional[str], list[str]]:
@@ -30,7 +39,7 @@ def __get_message_domain__(parts: list[str], domain: list[str]) -> tuple[Optiona
         parts.pop() # remove the type part
     return [to_return, parts]
 
-def __get_message_type(parts: list[str]) -> tuple[Optional[str], list[str]]:
+def __get_message_type__(parts: list[str]) -> tuple[Optional[str], list[str]]:
     return __get_message_domain__(parts, TYPES)
 
 def __get_message_category__(parts: list[str]) -> tuple[Optional[str], list[str]]:
@@ -45,23 +54,24 @@ def __get_message_category__(parts: list[str]) -> tuple[Optional[str], list[str]
 # - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
 # - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
 def get_message_args(text: str, date: datetime) -> ExpenseDto:
+    """Parse a message text to extract expense details."""
     parts = shlex.split(text)
     if not parts:
         raise ValueError("Ambiguous command. Not enough parameters.")
-    
+
     # Extract date
     out_date, parts = __get_message_date__(parts, date)
-    
+
     # Extract type and category
-    out_type, parts = __get_message_type(parts)
+    out_type, parts = __get_message_type__(parts)
     out_cat, parts = __get_message_category__(parts)
-    
+
     if len(parts) < 2:
         raise ValueError("Ambiguous command. Not enough parameters.")
-    
+
     # Extract description
     out_desc = " ".join(parts[1:])
-    
+
     # Extract amount
     amount_str = parts[0]
     try:
@@ -77,10 +87,14 @@ def get_message_args(text: str, date: datetime) -> ExpenseDto:
         else:
             out_amount = float(amount_str)
     except ZeroDivisionError as e:
-        raise ValueError(str(e))
-    except ValueError:
-        raise ValueError("Ambiguous command. Invalid amount.")
-    
+        log.warning("Exception while parsing amount from message: %s", e)
+        # Preserve user-friendly message while suppressing original context
+        raise ValueError(str(e)) from e
+    except ValueError as e:
+        log.warning("Exception while parsing amount from message: %s", e)
+        # Suppress original parsing error details to keep message concise
+        raise ValueError("Ambiguous command. Invalid amount.") from None
+
     # Create and return the MessageArgs model instance
     return ExpenseDto(
         amount=out_amount,

@@ -1,7 +1,6 @@
-
+import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-import logging
 
 from expanses_tracker.application.features.add_or_edit_expense.add_expense.add_handler import add_handler
 from expanses_tracker.application.features.add_or_edit_expense.edit_expense.edit_handler import edit_handler
@@ -11,6 +10,7 @@ log = logging.getLogger(__name__)
 
 @ensure_access_guard
 async def generic_message_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    """Handle generic messages for adding or editing expenses."""
     msg_id = update.effective_message.message_id
     msg = update.effective_message  # message/channel_post/edited_* whichever exists
 

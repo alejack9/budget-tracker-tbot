@@ -1,10 +1,15 @@
+"""Application registration for the Telegram bot."""
 
+import logging
 from pydantic_core import ValidationError
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import logging
-from expanses_tracker.application.features.add_or_edit_expense.generic_message_handler import generic_message_handler
-from expanses_tracker.application.features.delete_expense.delete_command_handler import delete_command_handler
+from expanses_tracker.application.features.add_or_edit_expense.generic_message_handler import (
+    generic_message_handler,
+)
+from expanses_tracker.application.features.delete_expense.delete_command_handler import (
+    delete_command_handler
+)
 from expanses_tracker.application.models.button_data_dto import BTN_CALLBACKS, ButtonDataDto
 from expanses_tracker.application.utils.decorators import ensure_access_guard
 
@@ -40,8 +45,9 @@ async def __button_cb__(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         await query.answer(f"Unknown action. Data: {data}", show_alert=True)
 
 def application_registration(app):
+    """Register application handlers for the Telegram bot."""
     app.add_handler(CommandHandler("start", __cmd_start__))
-    app.add_handler(CommandHandler("delete", delete_command_handler)) 
-    app.add_handler(MessageHandler(~filters.COMMAND, generic_message_handler), group=1) 
+    app.add_handler(CommandHandler("delete", delete_command_handler))
+    app.add_handler(MessageHandler(~filters.COMMAND, generic_message_handler), group=1)
     app.add_handler(CallbackQueryHandler(__button_cb__))
     return app

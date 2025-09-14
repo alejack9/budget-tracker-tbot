@@ -1,4 +1,7 @@
-import os, logging
+"""Main entry point for the Telegram bot."""
+
+import os
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder
 
@@ -11,24 +14,25 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 def main():
+    """Main function to start the bot."""
     # Read bot token at runtime to avoid import-time failures
-    BOT_TOKEN = os.environ["BOT_TOKEN"]
-    
+    bot_token = os.environ["BOT_TOKEN"]
+
     # Initialize database
     log.info("Initializing database...")
     try:
         # Run DB setup
         persistence_registration()
         engine_name = DatabaseFactory.get_engine_name()
-        log.info(f"Using database engine: {engine_name}")
+        log.info("Using database engine %s:", engine_name)
     except ValueError as e:
-        log.error(f"Database configuration error: {e}")
+        log.error("Database configuration error: %s", e)
         raise
-    
+
     # Initialize Telegram bot
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(bot_token).build()
     app = application_registration(app)
-    
+
     log.info("Bot initialized, starting polling...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
