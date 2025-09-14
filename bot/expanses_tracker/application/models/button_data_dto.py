@@ -11,11 +11,10 @@ class ButtonCallbacksRegistry:
         """Register a button callback action."""
         ButtonCallbacksRegistry.BTN_CALLBACKS[action] = func
 
-
 class ButtonDataDto(BaseModel):
     """Data Transfer Object for button data."""
     action: str = Literal['delete', 'restore', 'update']
     message_id: int
     chat_id: int
-    type: Optional[str] = None
+    type: Optional[str] = Optional[Literal['category', 'type']]
     value: Optional[str] = None
