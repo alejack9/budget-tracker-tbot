@@ -1,7 +1,5 @@
-# TODO find a way to reduce image size
 # ---- Builder -----------------------------------------------------------------
-# Use a builder image with Python and common development dependencies
-FROM python:3.12 AS builder
+FROM python:3.12-slim AS builder
 
 ENV PIP_NO_CACHE_DIR=1 \
     POETRY_VERSION=">=2.0.0,<3.0.0" \
@@ -10,6 +8,11 @@ ENV PIP_NO_CACHE_DIR=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
+
+# System deps for building wheels (add more if your deps need them)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Poetry 2.x
 RUN python -m pip install --upgrade pip && \
@@ -25,17 +28,11 @@ COPY . .
 RUN poetry build -f wheel
 
 # ---- Runtime -----------------------------------------------------------------
-# Use a full Python image that already includes many development packages
-FROM python:3.12 AS runtime
+FROM python:3.12-slim AS runtime
 
 ENV PIP_NO_CACHE_DIR=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
-
-# Install additional database client tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client default-mysql-client && \
-    rm -rf /var/lib/apt/lists/*
 
 # Non-root user
 RUN adduser --disabled-password --gecos "" --uid 10001 app
