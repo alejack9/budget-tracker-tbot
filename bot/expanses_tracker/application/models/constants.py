@@ -1,3 +1,4 @@
+"""Constants for the expense tracker application."""
 import os
 from typing import List
 

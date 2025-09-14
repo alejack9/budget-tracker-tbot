@@ -1,3 +1,4 @@
+"""Data Transfer Object for expense details in the expense tracker bot."""
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel

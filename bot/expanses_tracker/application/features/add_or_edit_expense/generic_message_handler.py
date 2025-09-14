@@ -1,9 +1,14 @@
+"""Generic message handler for adding or editing expenses."""
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from expanses_tracker.application.features.add_or_edit_expense.add_expense.add_handler import add_handler
-from expanses_tracker.application.features.add_or_edit_expense.edit_expense.edit_handler import edit_handler
+from expanses_tracker.application.features.add_or_edit_expense.add_expense.add_handler import (
+    add_handler
+)
+from expanses_tracker.application.features.add_or_edit_expense.edit_expense.edit_handler import (
+    edit_handler
+)
 from expanses_tracker.application.utils.decorators import ensure_access_guard
 
 log = logging.getLogger(__name__)
