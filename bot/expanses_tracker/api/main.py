@@ -9,9 +9,11 @@ from expanses_tracker.application import application_registration
 from expanses_tracker.persistence import persistence_registration
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.INFO)
+# TODO fix level to propagate into submodules too
+log = logging.getLogger("expenses_tracker")
+log.setLevel(logging.DEBUG)
 
 def main():
     """Main function to start the bot."""
