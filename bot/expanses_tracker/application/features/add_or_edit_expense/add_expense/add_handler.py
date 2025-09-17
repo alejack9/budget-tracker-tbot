@@ -46,14 +46,28 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
                     chat_id=chat_id,
                     message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
             )
+            edit_category_btn = InlineKeyboardButton(
+                text="🏷️ Edit Category",
+                callback_data=ButtonDataDto(
+                    action="category",
+                    chat_id=chat_id,
+                    message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
+            )
+            edit_type_btn = InlineKeyboardButton(
+                text="🧩 Edit Type",
+                callback_data=ButtonDataDto(
+                    action="type",
+                    chat_id=chat_id,
+                    message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
+            )
             notice = await update.message.reply_text(
-                f"Expense saved with ID={msg_id} at {msg.date}:\n"
+                f"Expense saved at {msg.date}:\n"
                 f"Amount: {expense.amount}\n"
                 f"Description: {expense.description}\n"
                 f"Type: {expense.type or 'Not specified'}\n"
                 f"Category: {expense.category or 'Not specified'}\n"
                 f"Date: {expense.date.strftime('%Y-%m-%d')}",
-                reply_markup=InlineKeyboardMarkup([[del_btn]]),
+                reply_markup=InlineKeyboardMarkup([[del_btn, edit_category_btn, edit_type_btn]]),
                 reply_to_message_id=msg.message_id
             )
         except Exception as e:

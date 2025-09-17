@@ -13,8 +13,8 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
     try:
         arguments = get_message_args(msg.text, msg.edit_date)
     except ValueError as e:
-        await msg.reply_text(str(e))
-        await msg.reply_text("Entry not updated.")
+        await msg.reply_text(str(e), reply_to_message_id=msg_id)
+        await msg.reply_text("Entry not updated.", reply_to_message_id=msg_id)
         return
     # Get chat ID
     chat_id = update.effective_chat.id

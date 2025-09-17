@@ -7,7 +7,20 @@ from expanses_tracker.application.utils.decorators import button_callback
 
 log = logging.getLogger(__name__)
 
-@button_callback("edit")
+@button_callback("category")
 async def edit_button_handler(query: CallbackQuery, data: ButtonDataDto, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle the "edit" button press."""
-    await query.edit_message_text(text=f"Selected {data.type}: {data.value}")
+    """Handle the "edit category" button press."""
+    # TODO ask for the category with buttons. When clicked, update the value of the category for the entry.
+    log.debug("Query: %s", query)
+    log.debug("Update: %s", update)
+    log.debug("Context: %s", context)
+    # await query.edit_message_text(text=f"Selected category: {data.value}")
+
+@button_callback("type")
+async def edit_button_handler(query: CallbackQuery, data: ButtonDataDto, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle the "edit type" button press."""
+    # TODO ask for the type with buttons. When clicked, update the value of the type for the entry.
+    log.debug("Query: %s", query)
+    log.debug("Update: %s", update)
+    log.debug("Context: %s", context)
+    # await query.edit_message_text(text=f"Selected type: {data.value}")
