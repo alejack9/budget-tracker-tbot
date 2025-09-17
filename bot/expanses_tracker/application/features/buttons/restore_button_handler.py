@@ -13,13 +13,9 @@ log = logging.getLogger(__name__)
 @button_callback("restore")
 async def restore_button_handler(query: CallbackQuery, data: ButtonDataDto, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the restore button press."""
-    try:
-        chat_id = data.chat_id
-        msg_id = data.message_id
-        uid = update.effective_user.id if update.effective_user else 0
-    except Exception:
-        await query.message.reply_text("Invalid restore data.")
-        return
+    chat_id = data.chat_id
+    msg_id = data.message_id
+    uid = update.effective_user.id if update.effective_user else 0
     with DatabaseFactory.get_session() as session:
         try:
             restored = ExpenseRepository.restore(
@@ -29,14 +25,14 @@ async def restore_button_handler(query: CallbackQuery, data: ButtonDataDto, upda
                 user_id=uid,
                 undo_grace_seconds=UNDO_GRACE_SECONDS)
             if restored:
-                await query.message.reply_text("Restored")
+                await query.message.reply_text("Restored", reply_to_message_id=msg_id)
                 try:
                     if query.message:
                         await query.message.delete()
                 except Exception:
                     pass
             else:
-                await query.message.reply_text("Restore window expired or not allowed.")
+                await query.message.reply_text("Restore window expired or not allowed.", reply_to_message_id=msg_id)
         except Exception as e:
             log.exception("Restore failed")
-            await query.message.reply_text(f"Error: {e}")
+            await query.message.reply_text(f"Error: {e}", reply_to_message_id=msg_id)

@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
-from expanses_tracker.application.models.expense_dto import ExpenseDto
-from expanses_tracker.persistence.configurations.expense_model import ExpenseModel, ExpenseSchema
+from expanses_tracker.application.models.expense import ExpenseDto, ExpenseSchema
+from expanses_tracker.persistence.configurations.expense_model import ExpenseModel
 
 class ExpenseRepository:
     """Repository class to handle database operations for ExpenseModel"""
@@ -45,14 +45,16 @@ class ExpenseRepository:
         return db_expense
     
     @staticmethod
-    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseSchema]:
+    def __get_expense_model_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> ExpenseModel | None:
         """
-        Get an expense by its message ID and chat ID
+        Get an expense by its message ID, chat ID and user ID
         
         Args:
             session: Database session
             message_id: Telegram message ID
             chat_id: Telegram chat ID
+            user_id: Telegram user ID
+            include_deleted: Whether to include soft-deleted expenses
             
         Returns:
             ExpenseModel if found, None otherwise
@@ -65,6 +67,26 @@ class ExpenseRepository:
         if not include_deleted:
             q = q.filter(ExpenseModel.deleted_at.is_(None))
         to_return = q.first()
+        return to_return
+
+    @staticmethod
+    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseSchema]:
+        """
+        Get an expense by its message ID, chat ID and user ID
+        
+        Args:
+            session: Database session
+            message_id: Telegram message ID
+            chat_id: Telegram chat ID
+            user_id: Telegram user ID
+            include_deleted: Whether to include soft-deleted expenses
+            
+        Returns:
+            ExpenseSchema if found, None otherwise
+        """
+        to_return = ExpenseRepository.__get_expense_model_by_id(
+            session, message_id, chat_id, user_id, include_deleted=include_deleted
+        )
         return None if to_return is None else ExpenseSchema.model_validate(to_return)
 
     @staticmethod
@@ -88,7 +110,7 @@ class ExpenseRepository:
         Returns:
             Updated ExpenseModel if found, None otherwise
         """
-        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
+        db_expense = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id)
         if not db_expense:
             return None
             
@@ -102,9 +124,9 @@ class ExpenseRepository:
         return ExpenseSchema.model_validate(db_expense)
 
     @staticmethod
-    def soft_delete(session, message_id: int, chat_id: int, user_id: int) -> bool:
+    def soft_delete(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
         """Set deleted_at=now if owned by user_id and not already deleted. Return True if changed."""
-        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
+        exp = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id)
         if not exp:
             return False
         if exp.user_id != user_id:
@@ -116,13 +138,30 @@ class ExpenseRepository:
         return True
 
     @staticmethod
-    def restore(session, chat_id: int, message_id: int, user_id: int, undo_grace_seconds: int) -> bool:
-        """If deleted_at is within undo_grace_seconds, clear it. Return True if restored."""
-        exp = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id, include_deleted=True)
+    def restore(session: Session, chat_id: int, message_id: int, user_id: int, undo_grace_seconds: int) -> bool:
+        """
+        If deleted_at is within undo_grace_seconds, clear it. Return True if restored.
+        
+        Args:
+            session: Database session
+            chat_id: Telegram chat ID
+            message_id: Telegram message ID
+            user_id: Telegram user ID
+            undo_grace_seconds: Time window in seconds during which restoration is allowed
+            
+        Returns:
+            True if restored, False otherwise
+        """
+        exp = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not exp or exp.user_id != user_id or exp.deleted_at is None:
             return False
         now = datetime.now(timezone.utc)
-        if (now - exp.deleted_at).total_seconds() > undo_grace_seconds:
+        deleted_at = exp.deleted_at
+        # Ensure deleted_at is timezone-aware (assume UTC if naive)
+        if deleted_at.tzinfo is None:
+            deleted_at = deleted_at.replace(tzinfo=timezone.utc)
+        passed_time = now - deleted_at
+        if passed_time.total_seconds() > undo_grace_seconds:
             return False
         exp.deleted_at = None
         session.commit()
@@ -142,7 +181,7 @@ class ExpenseRepository:
         Returns:
             True if deleted, False if not found
         """
-        db_expense = ExpenseRepository.get_expense_by_id(session, message_id, chat_id, user_id)
+        db_expense = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not db_expense:
             return False
             

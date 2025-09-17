@@ -13,8 +13,7 @@ class ButtonCallbacksRegistry:
 
 class ButtonDataDto(BaseModel):
     """Data Transfer Object for button data."""
-    action: str = Literal['delete', 'restore', 'update']
+    action: str = Literal['delete', 'restore', 'category', 'type']
     message_id: int
     chat_id: int
-    type: Optional[str] = Optional[Literal['category', 'type']]
     value: Optional[str] = None

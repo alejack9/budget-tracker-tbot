@@ -7,7 +7,7 @@ import shlex
 from typing import Optional
 
 from expanses_tracker.application.models.constants import CATEGORIES, TYPES
-from expanses_tracker.application.models.expense_dto import ExpenseDto
+from expanses_tracker.application.models.expense import ExpenseDto
 
 log = logging.getLogger(__name__)
 

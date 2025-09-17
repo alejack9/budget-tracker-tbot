@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional
 from sqlalchemy import Column, Integer, Float, String, DateTime
-from pydantic import BaseModel
 from expanses_tracker.persistence.configurations.base import Base
 
 class ExpenseModel(Base):
@@ -27,20 +25,3 @@ class ExpenseModel(Base):
                 f"category='{self.category}', date='{self.date}', "
                 f"created_at='{self.created_at}', updated_at='{self.updated_at}', "
                 f"deleted_at='{self.deleted_at}')>")
-
-class ExpenseSchema(BaseModel):
-    """Pydantic model for serialization/deserialization of expenses"""
-    msg_id: int
-    chat_id: int
-    user_id: int
-    amount: float
-    description: str
-    type: Optional[str] = None
-    category: Optional[str] = None
-    date: datetime
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
