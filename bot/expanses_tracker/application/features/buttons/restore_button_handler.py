@@ -1,8 +1,8 @@
 """Handler for the restore button in the expense tracker bot."""
 import logging
-from telegram import CallbackQuery, Update
+from telegram import CallbackQuery, Message, Update
 from telegram.ext import ContextTypes
-from expanses_tracker.application.models.button_data_dto import ButtonDataDto
+from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonDataDto
 from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
 from expanses_tracker.application.utils.decorators import button_callback
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
@@ -10,12 +10,16 @@ from expanses_tracker.persistence.repositories.repository import ExpenseReposito
 
 log = logging.getLogger(__name__)
 
-@button_callback("restore")
+@button_callback(BUTTON_ACTIONS.RESTORE)
 async def restore_button_handler(query: CallbackQuery, data: ButtonDataDto, update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the restore button press."""
     chat_id = data.chat_id
     msg_id = data.message_id
     uid = update.effective_user.id if update.effective_user else 0
+
+    if not query.message or not isinstance(query.message, Message):
+        log.error("No message found in callback query: %s", query)
+        return
     with DatabaseFactory.get_session() as session:
         try:
             restored = ExpenseRepository.restore(

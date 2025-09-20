@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 async def edit_handler(msg: Message, msg_id: int, update: Update):
     """Handle editing an existing expense entry in the database."""
+    assert msg.edit_date is not None, "Message edit date can't be None for edited messages."
     try:
         arguments = get_message_args(msg.text, msg.edit_date)
     except ValueError as e:
@@ -17,7 +18,7 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
         await msg.reply_text("Entry not updated.", reply_to_message_id=msg_id)
         return
     # Get chat ID
-    chat_id = update.effective_chat.id
+    chat_id = update.effective_chat.id if update.effective_chat else 0
     user_id = update.effective_user.id if update.effective_user else 0
     # Update expense in database
     with DatabaseFactory.get_session() as session:

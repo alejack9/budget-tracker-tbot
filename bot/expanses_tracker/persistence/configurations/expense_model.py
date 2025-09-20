@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, Float, String, DateTime
+from typing import Optional
+from sqlalchemy import Integer, Float, String, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 from expanses_tracker.persistence.configurations.base import Base
 
 class ExpenseModel(Base):
@@ -7,17 +9,17 @@ class ExpenseModel(Base):
     __tablename__ = 'expenses'
 
     # Database columns
-    msg_id = Column(Integer, primary_key=True)  # telegram message id
-    chat_id = Column(Integer, primary_key=True) # telegram chat id
-    user_id = Column(Integer, primary_key=True)  # telegram user id
-    amount = Column(Float, nullable=False)
-    description = Column(String(255), nullable=False)
-    type = Column(String(50), nullable=True)
-    category = Column(String(50), nullable=True)
-    date = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    deleted_at = Column(DateTime, nullable=True)  # Timestamp for soft deletion
+    msg_id: Mapped[int] = mapped_column(Integer, primary_key=True)  # telegram message id
+    chat_id: Mapped[int] = mapped_column(Integer, primary_key=True) # telegram chat id
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)  # telegram user id
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=True)
+    category: Mapped[str] = mapped_column(String(50), nullable=True)
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)  # Timestamp for soft deletion
 
     def __repr__(self):
         return (f"<Expense(msg_id={self.msg_id}, chat_id={self.chat_id}, user_id={self.user_id}, "

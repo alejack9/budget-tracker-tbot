@@ -91,8 +91,8 @@ class ExpenseRepository:
 
     @staticmethod
     def update_expense(
-        session: Session, 
-        message_id: int, 
+        session: Session,
+        message_id: int,
         chat_id: int,
         user_id: int,
         updated_data: Dict[str, Any]

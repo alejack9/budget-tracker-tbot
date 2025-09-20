@@ -29,7 +29,7 @@ def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[date
             log.warning("Exception while parsing date from message: %s", e)
             # Intentionally hide original cause from end users
             raise ValueError("Ambiguous command. Invalid date.") from None
-    return [to_return, parts]
+    return to_return, parts
 
 def __get_message_domain__(parts: list[str], domain: list[str]) -> tuple[Optional[str], list[str]]:
     """Extract type from the last element of parts if it matches a known type."""
@@ -37,7 +37,7 @@ def __get_message_domain__(parts: list[str], domain: list[str]) -> tuple[Optiona
     if parts and parts[-1].lower() in domain:
         to_return = parts[-1].lower()
         parts.pop() # remove the type part
-    return [to_return, parts]
+    return to_return, parts
 
 def __get_message_type__(parts: list[str]) -> tuple[Optional[str], list[str]]:
     return __get_message_domain__(parts, TYPES)
@@ -53,8 +53,10 @@ def __get_message_category__(parts: list[str]) -> tuple[Optional[str], list[str]
 # - 10/2 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 5 (10/2), description: spesa
 # - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
 # - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
-def get_message_args(text: str, date: datetime) -> ExpenseDto:
+def get_message_args(text: str | None, date: datetime) -> ExpenseDto:
     """Parse a message text to extract expense details."""
+    if text is None or not text.strip():
+        raise ValueError("Empty command. Not enough parameters.")
     parts = shlex.split(text)
     if not parts:
         raise ValueError("Ambiguous command. Not enough parameters.")

@@ -1,7 +1,7 @@
 """ Handler for adding a new expense based on user message input. """
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
-from expanses_tracker.application.models.button_data_dto import ButtonDataDto
+from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonDataDto
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 from expanses_tracker.persistence.repositories.repository import ExpenseRepository
@@ -26,6 +26,9 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
         return
 
     # Get chat ID
+    if not update.effective_chat:
+        log.error("No effective chat found in update.")
+        return
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id if update.effective_user else 0
 
@@ -42,24 +45,27 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
             del_btn = InlineKeyboardButton(
                 text="🗑️ Delete",
                 callback_data=ButtonDataDto(
-                    action="delete",
+                    action=BUTTON_ACTIONS.DELETE,
                     chat_id=chat_id,
                     message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
             )
             edit_category_btn = InlineKeyboardButton(
                 text="🏷️ Edit Category",
                 callback_data=ButtonDataDto(
-                    action="category",
+                    action=BUTTON_ACTIONS.CATEGORY,
                     chat_id=chat_id,
                     message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
             )
             edit_type_btn = InlineKeyboardButton(
                 text="🧩 Edit Type",
                 callback_data=ButtonDataDto(
-                    action="type",
+                    action=BUTTON_ACTIONS.TYPE,
                     chat_id=chat_id,
                     message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
             )
+            if not update.message:
+                log.error("No message found in update.")
+                return
             notice = await update.message.reply_text(
                 f"Expense saved at {msg.date}:\n"
                 f"Amount: {expense.amount}\n"

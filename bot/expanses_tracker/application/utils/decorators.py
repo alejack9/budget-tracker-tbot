@@ -4,7 +4,7 @@ import os
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from expanses_tracker.application.models.button_data_dto import ButtonCallbacksRegistry
+from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonCallbacksRegistry
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,10 @@ def ensure_access_guard(func):
     async def __ensure_access(update: Update) -> bool:
         uid = update.effective_user.id if update.effective_user else 0
         if not (not ALLOWED or uid in ALLOWED):
-            await update.effective_chat.send_message("⛔ Unauthorized.")
+            if effective_chat := update.effective_chat:
+                await effective_chat.send_message("⛔ Unauthorized.")
+            else:
+                log.error("No effective chat found in update.")
             log.warning("Unauthorized user tried to use the bot: %s", uid)
             return False
         return True
@@ -29,7 +32,7 @@ def ensure_access_guard(func):
             return await func(update, context)
     return __wrapper
 
-def button_callback(action: str):
+def button_callback(action: BUTTON_ACTIONS):
     """Decorator to register a button callback action."""
     def decorator(func):
         ButtonCallbacksRegistry.add_callback(action, func)
