@@ -1,4 +1,4 @@
-"""Handler for the restore button in the expense tracker bot."""
+"""Handler for the restore button in the outcome tracker bot."""
 import logging
 from telegram import CallbackQuery, Message, Update
 from telegram.ext import ContextTypes
@@ -6,7 +6,7 @@ from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, 
 from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
 from expanses_tracker.application.utils.decorators import button_callback
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
-from expanses_tracker.persistence.repositories.repository import ExpenseRepository
+from expanses_tracker.persistence.repositories.repository import OutcomeRepository
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ async def restore_button_handler(query: CallbackQuery, data: ButtonDataDto, upda
         return
     with DatabaseFactory.get_session() as session:
         try:
-            restored = ExpenseRepository.restore(
+            restored = OutcomeRepository.restore(
                 session,
                 chat_id=chat_id,
                 message_id=msg_id,
