@@ -1,10 +1,15 @@
 # runs on main and pull requests into main
-name: CI
+name: CICD Pipeline
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [published]
+
+env:
+  DOCKER_IMAGE_NAME: jack129x/budget-tracker-tbot
 
 # runs jobs on ubuntu-latest
 jobs:
@@ -33,17 +38,48 @@ jobs:
         run: |
           poetry build
         working-directory: ./bot
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: expanses-tracker-tbot-package
+          path: ./bot/dist
+  docker-image:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download package artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: expanses-tracker-tbot-package
+          path: ./bot/dist
       - name: create docker image
         run: |
-          docker build -t expanses-tracker-tbot:local .
+          docker build -t $DOCKER_IMAGE_NAME:local .
         working-directory: ./bot
       - name: save docker image as tar
         run: |
-          docker save expanses-tracker-tbot:local -o expanses-tracker-tbot.tar
+          docker save $DOCKER_IMAGE_NAME:local -o docker-image.tar
       - name: Upload docker image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: expanses-tracker-tbot-image
-          path: expanses-tracker-tbot.tar
+          name: docker-image
+          path: docker-image.tar
           compression-level: 9
-
+      - name: Set up Docker Buildx
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract release tag
+        if: github.event_name == 'release' && github.event.action == 'published'
+        id: get_tag
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Build and push Docker image
+        if: github.event_name == 'release' && github.event.action == 'published'
+        run: |
+          docker push $DOCKER_IMAGE_NAME:$RELEASE_TAG
