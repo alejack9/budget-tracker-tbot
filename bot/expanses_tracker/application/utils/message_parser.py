@@ -57,7 +57,14 @@ def get_message_args(text: str | None, date: datetime) -> ExpenseDto:
     """Parse a message text to extract expense details."""
     if text is None or not text.strip():
         raise ValueError("Empty command. Not enough parameters.")
-    parts = shlex.split(text)
+    # Escape apostrophes embedded in words so shlex keeps the token intact
+    # Example: "4 that's ok" becomes "4 that\'s ok"
+    sanitized_text = re.sub(r"(?<=\w)'(?=\w)", r"\\'", text)
+    try:
+        parts = shlex.split(sanitized_text)
+    except ValueError as exc:
+        log.warning("Exception while splitting message text: %s", exc)
+        raise ValueError("Ambiguous command. Not enough parameters.") from None
     if not parts:
         raise ValueError("Ambiguous command. Not enough parameters.")
 

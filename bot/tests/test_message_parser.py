@@ -162,7 +162,6 @@ def test_get_message_args_happy_paths(text, default_dt, expected):
     assert out.category == expected["category"]
     assert out.date == expected["date"]
 
-
 @pytest.mark.parametrize(
     "text, err_re",
     [
@@ -181,7 +180,6 @@ def test_get_message_args_errors(text, err_re):
     with pytest.raises(ValueError, match=err_re):
         get_message_args(text, datetime(2025, 9, 9))
 
-
 def test_type_after_category_is_not_parsed():
     """
         "type" must be the last token when both are present
@@ -192,4 +190,12 @@ def test_type_after_category_is_not_parsed():
     assert out.category == "food"
     assert out.type is None
     assert out.description == "spesa need"
+    assert out.amount == pytest.approx(10.0)
+
+def test_quotes():
+    """Handles quoted descriptions with spaces correctly."""
+    out = get_message_args('10 l\'unica spesa del mese food need', datetime(2025, 9, 9))
+    assert out.description == "l'unica spesa del mese"
+    assert out.category == "food"
+    assert out.type == "need"
     assert out.amount == pytest.approx(10.0)
