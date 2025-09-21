@@ -14,8 +14,8 @@ class ExpenseModel(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)  # telegram user id
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[str] = mapped_column(String(50), nullable=True)
-    category: Mapped[str] = mapped_column(String(50), nullable=True)
+    type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))

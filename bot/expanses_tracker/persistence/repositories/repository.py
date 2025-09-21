@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from expanses_tracker.application.models.expense import ExpenseDto, ExpenseSchema
@@ -15,7 +15,7 @@ class ExpenseRepository:
         message_id: int,
         chat_id: int,
         user_id: int
-    ) -> ExpenseModel:
+    ) -> ExpenseSchema:
         """
         Create a new expense record in the database
         
@@ -42,7 +42,7 @@ class ExpenseRepository:
         session.add(db_expense)
         session.commit()
         session.refresh(db_expense)
-        return db_expense
+        return ExpenseSchema.model_validate(db_expense)
     
     @staticmethod
     def __get_expense_model_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> ExpenseModel | None:
@@ -92,32 +92,28 @@ class ExpenseRepository:
     @staticmethod
     def update_expense(
         session: Session,
-        message_id: int,
-        chat_id: int,
-        user_id: int,
-        updated_data: Dict[str, Any]
+        updated_expense: ExpenseSchema
     ) -> Optional[ExpenseSchema]:
         """
         Update an expense record
         
         Args:
             session: Database session
-            message_id: Telegram message ID
-            chat_id: Telegram chat ID
-            user_id: Telegram user ID
-            updated_data: Dictionary with fields to update
+            updated_expense: ExpenseModel instance containing new field values
             
         Returns:
-            Updated ExpenseModel if found, None otherwise
+            Updated ExpenseSchema if found, None otherwise
         """
-        db_expense = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id)
+        db_expense = ExpenseRepository.__get_expense_model_by_id(session, updated_expense.msg_id, updated_expense.chat_id, updated_expense.user_id)
         if not db_expense:
             return None
             
-        # Update fields
-        for key, value in updated_data.items():
-            if hasattr(db_expense, key):
-                setattr(db_expense, key, value)
+        # Update fields from provided model
+        db_expense.amount = updated_expense.amount
+        db_expense.description = updated_expense.description
+        db_expense.type = updated_expense.type
+        db_expense.category = updated_expense.category
+        db_expense.date = updated_expense.date
                 
         session.commit()
         session.refresh(db_expense)

@@ -1,6 +1,7 @@
 """ Handler for adding a new expense based on user message input. """
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
+from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
 from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonDataDto
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
@@ -42,40 +43,10 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
                 chat_id=chat_id,
                 user_id=user_id
             )
-            del_btn = InlineKeyboardButton(
-                text="🗑️ Delete",
-                callback_data=ButtonDataDto(
-                    action=BUTTON_ACTIONS.DELETE,
-                    chat_id=chat_id,
-                    message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
-            )
-            edit_category_btn = InlineKeyboardButton(
-                text="🏷️ Edit Category",
-                callback_data=ButtonDataDto(
-                    action=BUTTON_ACTIONS.CATEGORY,
-                    chat_id=chat_id,
-                    message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
-            )
-            edit_type_btn = InlineKeyboardButton(
-                text="🧩 Edit Type",
-                callback_data=ButtonDataDto(
-                    action=BUTTON_ACTIONS.TYPE,
-                    chat_id=chat_id,
-                    message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
-            )
             if not update.message:
                 log.error("No message found in update.")
                 return
-            notice = await update.message.reply_text(
-                f"Expense saved at {msg.date}:\n"
-                f"Amount: {expense.amount}\n"
-                f"Description: {expense.description}\n"
-                f"Type: {expense.type or 'Not specified'}\n"
-                f"Category: {expense.category or 'Not specified'}\n"
-                f"Date: {expense.date.strftime('%Y-%m-%d')}",
-                reply_markup=InlineKeyboardMarkup([[del_btn, edit_category_btn, edit_type_btn]]),
-                reply_to_message_id=msg.message_id
-            )
+            await generate_notice(update, msg_id, msg, expense, update.message)
         except Exception as e:
             log.error("Error saving expense: %s", e)
             await msg.reply_text(

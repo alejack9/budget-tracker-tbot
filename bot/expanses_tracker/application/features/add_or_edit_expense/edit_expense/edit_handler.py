@@ -2,6 +2,8 @@
 import logging
 from telegram import Message, Update
 
+from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
+from expanses_tracker.application.models.expense import ExpenseSchema
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 from expanses_tracker.persistence.repositories.repository import ExpenseRepository
@@ -25,27 +27,19 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
         try:
             expense = ExpenseRepository.update_expense(
                 session=session,
-                message_id=msg_id,
-                chat_id=chat_id,
-                user_id=user_id,
-                updated_data={
-                    "amount": arguments.amount,
-                    "description": arguments.description,
-                    "type": arguments.type,
-                    "category": arguments.category,
-                    "date": arguments.date
-                }
+                updated_expense=ExpenseSchema.model_construct(
+                    msg_id=msg_id,
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    amount=arguments.amount,
+                    description=arguments.description,
+                    type=arguments.type,
+                    category=arguments.category,
+                    date=arguments.date
+                )
             )
             if expense:
-                await msg.reply_text(
-                    f"Expense updated with ID={msg_id} at {msg.edit_date}:\n"
-                    f"Amount: {expense.amount}\n"
-                    f"Description: {expense.description}\n"
-                    f"Type: {expense.type or 'Not specified'}\n"
-                    f"Category: {expense.category or 'Not specified'}\n"
-                    f"Date: {expense.date.strftime('%Y-%m-%d')}",
-                    reply_to_message_id=msg.message_id
-                )
+                await generate_notice(update, msg_id, msg, expense, msg)
             else:
                 await msg.reply_text(
                     "No existing expense found to update.",
