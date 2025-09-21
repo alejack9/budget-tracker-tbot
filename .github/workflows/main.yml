@@ -39,7 +39,7 @@ jobs:
           poetry build
         working-directory: ./bot
       - name: Upload package artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: expanses-tracker-tbot-package
           path: ./bot/dist
@@ -61,7 +61,7 @@ jobs:
         run: |
           docker save $DOCKER_IMAGE_NAME:local -o docker-image.tar
       - name: Upload docker image artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: docker-image.tar
