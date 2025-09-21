@@ -170,7 +170,7 @@ class ExpenseRepository:
     @staticmethod
     def delete_expense(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
         """
-        Delete an expense record
+        Delete an expense record that is still marked as soft deleted.
         
         Args:
             session: Database session
@@ -184,7 +184,10 @@ class ExpenseRepository:
         db_expense = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not db_expense:
             return False
-            
+        # Skip hard deletion when the expense was restored before the grace window elapsed
+        if db_expense.deleted_at is None:
+            return False
+ 
         session.delete(db_expense)
         session.commit()
         return True
