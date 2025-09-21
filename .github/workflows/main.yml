@@ -82,4 +82,5 @@ jobs:
       - name: Build and push Docker image
         if: github.event_name == 'release' && github.event.action == 'published'
         run: |
+          docker tag $DOCKER_IMAGE_NAME:local $DOCKER_IMAGE_NAME:$RELEASE_TAG
           docker push $DOCKER_IMAGE_NAME:$RELEASE_TAG
