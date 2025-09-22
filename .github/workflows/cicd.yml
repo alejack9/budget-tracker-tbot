@@ -43,8 +43,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >-
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=bot/expanses_tracker
             -Dsonar.tests=bot/tests
