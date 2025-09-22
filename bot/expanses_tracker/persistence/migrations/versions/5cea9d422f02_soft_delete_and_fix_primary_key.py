@@ -5,7 +5,7 @@ Revises: 918fa8da2f09
 Create Date: 2025-09-13 11:04:05.023370
 
 """
-from typing import Sequence, Union
+from typing import Sequence
 
 from alembic import op
 import sqlalchemy as sa
@@ -13,9 +13,9 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '5cea9d422f02'
-down_revision: Union[str, Sequence[str], None] = '918fa8da2f09'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = '918fa8da2f09'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
