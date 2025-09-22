@@ -47,6 +47,7 @@ jobs:
             -Dsonar.python.version=3.12
             -Dsonar.sources=bot/expanses_tracker
             -Dsonar.tests=bot/tests
+            -Dsonar.exclusions=bot/expanses_tracker/persistence/migrations/**
       - name: build package
         run: |
           poetry build
