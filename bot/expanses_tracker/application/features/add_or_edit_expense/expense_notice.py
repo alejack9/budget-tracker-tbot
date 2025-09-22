@@ -1,7 +1,7 @@
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 
-from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonDataDto
+from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonDataDto
 from expanses_tracker.application.models.outcome import OutcomeSchema
 
 log = logging.getLogger(__name__)
@@ -15,21 +15,21 @@ async def generate_notice(update: Update, msg_id: int, msg: Message, outcome: Ou
     del_btn = InlineKeyboardButton(
         text="🗑️ Delete",
         callback_data=ButtonDataDto(
-            action=BUTTON_ACTIONS.DELETE,
+            action=ButtonActions.DELETE,
             chat_id=chat_id,
             message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
     )
     edit_category_btn = InlineKeyboardButton(
         text="🏷️ Edit Category",
         callback_data=ButtonDataDto(
-            action=BUTTON_ACTIONS.CATEGORY,
+            action=ButtonActions.CATEGORY,
             chat_id=chat_id,
             message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
     )
     edit_type_btn = InlineKeyboardButton(
         text="🧩 Edit Type",
         callback_data=ButtonDataDto(
-            action=BUTTON_ACTIONS.TYPE,
+            action=ButtonActions.TYPE,
             chat_id=chat_id,
             message_id=msg_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
     )

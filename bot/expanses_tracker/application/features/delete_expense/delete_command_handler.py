@@ -3,7 +3,7 @@ import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 from telegram.ext import ContextTypes
 
-from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonDataDto
+from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonDataDto
 from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
 from expanses_tracker.application.utils.decorators import ensure_access_guard
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
@@ -60,7 +60,7 @@ async def __soft_delete_expense__(
             btn = InlineKeyboardButton(
                 text="↩️ Restore",
                 callback_data=ButtonDataDto(
-                    action=BUTTON_ACTIONS.RESTORE,
+                    action=ButtonActions.RESTORE,
                     chat_id=chat_id,
                     message_id=message_id).model_dump_json(exclude_none=True,exclude_defaults=True,exclude_unset=True),
             )

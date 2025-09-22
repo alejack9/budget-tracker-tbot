@@ -4,7 +4,7 @@ import os
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from expanses_tracker.application.models.button_data_dto import BUTTON_ACTIONS, ButtonCallbacksRegistry
+from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonCallbacksRegistry
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def ensure_access_guard(func):
             return await func(update, context)
     return __wrapper
 
-def button_callback(action: BUTTON_ACTIONS):
+def button_callback(action: ButtonActions):
     """Decorator to register a button callback action."""
     def decorator(func):
         ButtonCallbacksRegistry.add_callback(action, func)
