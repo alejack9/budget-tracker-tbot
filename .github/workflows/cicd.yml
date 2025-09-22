@@ -49,6 +49,7 @@ jobs:
             -Dsonar.sources=bot/expanses_tracker
             -Dsonar.tests=bot/tests
             -Dsonar.exclusions=bot/expanses_tracker/persistence/migrations/**
+            -Dsonar.pullrequest.github.summary_comment=true
       - name: build package
         run: |
           poetry build
