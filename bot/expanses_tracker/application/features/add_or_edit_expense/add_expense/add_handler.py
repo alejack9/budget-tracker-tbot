@@ -1,10 +1,12 @@
 """ Handler for adding a new expense based on user message input. """
 import logging
 from telegram import Message, Update
+from telegram.constants import ParseMode
 from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
-from expanses_tracker.persistence.repositories.repository import OutcomeRepository
+from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ log = logging.getLogger(__name__)
 # - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
 # guard already checked by generic_message_handler
 async def add_handler(msg: Message, msg_id: int, update: Update):
-    """Handle adding a new outcome based on user message input."""
+    """Handle adding a new expense based on user message input."""
     try:
         arguments = get_message_args(msg.text, msg.date)
     except ValueError as e:
@@ -32,12 +34,12 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id if update.effective_user else 0
 
-    # Save outcome to database
+    # Save expense to database
     with DatabaseFactory.get_session() as session:
         try:
-            outcome = OutcomeRepository.create_outcome(
+            expense = ExpenseRepository.create_expense(
                 session=session,
-                outcome=arguments,
+                expense=arguments,
                 message_id=msg_id,
                 chat_id=chat_id,
                 user_id=user_id
@@ -45,7 +47,17 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
             if not update.message:
                 log.error("No message found in update.")
                 return
-            await generate_notice(update, msg_id, msg, outcome, update.message)
+            await generate_notice(update, msg_id, msg, expense, update.message)
+            recent_expenses = ExpenseRepository.get_last_expenses(
+                session=session,
+                chat_id=chat_id,
+                user_id=user_id
+            )
+            await update.message.reply_text(
+                format_recent_expenses(recent_expenses),
+                reply_to_message_id=msg.message_id,
+                parse_mode=ParseMode.HTML
+            )
         except Exception as e:
             log.error("Error saving expense: %s", e)
             await msg.reply_text(

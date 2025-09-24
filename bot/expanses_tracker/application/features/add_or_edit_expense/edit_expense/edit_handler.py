@@ -1,17 +1,19 @@
 """Handler for editing an existing expense entry in the database."""
 import logging
 from telegram import Message, Update
+from telegram.constants import ParseMode
 
 from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
-from expanses_tracker.application.models.outcome import OutcomeSchema
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
+from expanses_tracker.application.models.expense import ExpenseSchema
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
-from expanses_tracker.persistence.repositories.repository import OutcomeRepository
+from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
 log = logging.getLogger(__name__)
 
 async def edit_handler(msg: Message, msg_id: int, update: Update):
-    """Handle editing an existing outcome entry in the database."""
+    """Handle editing an existing expense entry in the database."""
     assert msg.edit_date is not None, "Message edit date can't be None for edited messages."
     try:
         arguments = get_message_args(msg.text, msg.edit_date)
@@ -22,12 +24,12 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
     # Get chat ID
     chat_id = update.effective_chat.id if update.effective_chat else 0
     user_id = update.effective_user.id if update.effective_user else 0
-    # Update outcome in database
+    # Update expense in database
     with DatabaseFactory.get_session() as session:
         try:
-            outcome = OutcomeRepository.update_outcome(
+            expense = ExpenseRepository.update_expense(
                 session=session,
-                updated_outcome=OutcomeSchema.model_construct(
+                updated_expense=ExpenseSchema.model_construct(
                     msg_id=msg_id,
                     chat_id=chat_id,
                     user_id=user_id,
@@ -38,8 +40,18 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
                     date=arguments.date
                 )
             )
-            if outcome:
-                await generate_notice(update, msg_id, msg, outcome, msg)
+            if expense:
+                await generate_notice(update, msg_id, msg, expense, msg)
+                recent_expenses = ExpenseRepository.get_last_expenses(
+                    session=session,
+                    chat_id=chat_id,
+                    user_id=user_id
+                )
+                await msg.reply_text(
+                    format_recent_expenses(recent_expenses),
+                    reply_to_message_id=msg.message_id,
+                    parse_mode=ParseMode.HTML
+                )
             else:
                 await msg.reply_text(
                     "No existing expense found to update.",

@@ -34,10 +34,11 @@ jobs:
         run: |
           poetry install
           poetry env activate
+          poetry run pip install pytest-cov
         working-directory: ./bot
       - name: Run tests
         run: |
-          poetry run pytest
+          poetry run pytest --cov=expanses_tracker --cov-report=xml --cov-report=term
         working-directory: ./bot
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
@@ -52,6 +53,7 @@ jobs:
             -Dsonar.sources=bot/expanses_tracker
             -Dsonar.tests=bot/tests
             -Dsonar.exclusions=bot/expanses_tracker/persistence/migrations/**
+            -Dsonar.python.coverage.reportPaths=bot/coverage.xml
             -Dsonar.pullrequest.github.summary_comment=true
       - name: build package
         run: |

@@ -2,127 +2,127 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from expanses_tracker.application.models.outcome import OutcomeDto, OutcomeSchema
-from expanses_tracker.persistence.configurations.outcome_model import OutcomeModel
+from expanses_tracker.application.models.expense import ExpenseDto, ExpenseSchema
+from expanses_tracker.persistence.configurations.expense_model import ExpenseModel
 
-class OutcomeRepository:
-    """Repository class to handle database operations for OutcomeModel"""
+class ExpenseRepository:
+    """Repository class to handle database operations for ExpenseModel"""
     
     @staticmethod
-    def create_outcome(
+    def create_expense(
         session: Session,
-        outcome: OutcomeDto,
+        expense: ExpenseDto,
         message_id: int,
         chat_id: int,
         user_id: int
-    ) -> OutcomeSchema:
+    ) -> ExpenseSchema:
         """
-        Create a new outcome record in the database
+        Create a new expense record in the database
         
         Args:
             session: Database session
-            outcome: Outcome data
+            expense: Expense data
             message_id: Telegram message ID
             chat_id: Telegram chat ID
             user_id: Telegram user ID
 
         Returns:
-            The created OutcomeModel instance
+            The created ExpenseModel instance
         """
-        db_outcome = OutcomeModel(
+        db_expense = ExpenseModel(
             msg_id=message_id,
-            amount=outcome.amount,
-            description=outcome.description,
-            type=outcome.type,
-            category=outcome.category,
-            date=outcome.date,
+            amount=expense.amount,
+            description=expense.description,
+            type=expense.type,
+            category=expense.category,
+            date=expense.date,
             chat_id=chat_id,
             user_id=user_id
         )
-        session.add(db_outcome)
+        session.add(db_expense)
         session.commit()
-        session.refresh(db_outcome)
-        return OutcomeSchema.model_validate(db_outcome)
+        session.refresh(db_expense)
+        return ExpenseSchema.model_validate(db_expense)
     
     @staticmethod
-    def __get_outcome_model_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> OutcomeModel | None:
+    def __get_expense_model_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> ExpenseModel | None:
         """
-        Get an outcome by its message ID, chat ID and user ID
+        Get an expense by its message ID, chat ID and user ID
         
         Args:
             session: Database session
             message_id: Telegram message ID
             chat_id: Telegram chat ID
             user_id: Telegram user ID
-            include_deleted: Whether to include soft-deleted outcomes
+            include_deleted: Whether to include soft-deleted expenses
             
         Returns:
-            OutcomeModel if found, None otherwise
+            ExpenseModel if found, None otherwise
         """
-        q = session.query(OutcomeModel).filter(
-            OutcomeModel.msg_id == message_id,
-            OutcomeModel.chat_id == chat_id,
-            OutcomeModel.user_id == user_id
+        q = session.query(ExpenseModel).filter(
+            ExpenseModel.msg_id == message_id,
+            ExpenseModel.chat_id == chat_id,
+            ExpenseModel.user_id == user_id
         )
         if not include_deleted:
-            q = q.filter(OutcomeModel.deleted_at.is_(None))
+            q = q.filter(ExpenseModel.deleted_at.is_(None))
         to_return = q.first()
         return to_return
 
     @staticmethod
-    def get_outcome_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[OutcomeSchema]:
+    def get_expense_by_id(session: Session, message_id: int, chat_id: int, user_id: int, include_deleted: bool = False) -> Optional[ExpenseSchema]:
         """
-        Get an outcome by its message ID, chat ID and user ID
+        Get an expense by its message ID, chat ID and user ID
         
         Args:
             session: Database session
             message_id: Telegram message ID
             chat_id: Telegram chat ID
             user_id: Telegram user ID
-            include_deleted: Whether to include soft-deleted outcomes
+            include_deleted: Whether to include soft-deleted expenses
             
         Returns:
-            OutcomeSchema if found, None otherwise
+            ExpenseSchema if found, None otherwise
         """
-        to_return = OutcomeRepository.__get_outcome_model_by_id(
+        to_return = ExpenseRepository.__get_expense_model_by_id(
             session, message_id, chat_id, user_id, include_deleted=include_deleted
         )
-        return None if to_return is None else OutcomeSchema.model_validate(to_return)
+        return None if to_return is None else ExpenseSchema.model_validate(to_return)
 
     @staticmethod
-    def update_outcome(
+    def update_expense(
         session: Session,
-        updated_outcome: OutcomeSchema
-    ) -> Optional[OutcomeSchema]:
+        updated_expense: ExpenseSchema
+    ) -> Optional[ExpenseSchema]:
         """
-        Update an outcome record
+        Update an expense record
         
         Args:
             session: Database session
-            updated_outcome: OutcomeModel instance containing new field values
+            updated_expense: ExpenseModel instance containing new field values
             
         Returns:
-            Updated OutcomeSchema if found, None otherwise
+            Updated ExpenseSchema if found, None otherwise
         """
-        db_outcome = OutcomeRepository.__get_outcome_model_by_id(session, updated_outcome.msg_id, updated_outcome.chat_id, updated_outcome.user_id)
-        if not db_outcome:
+        db_expense = ExpenseRepository.__get_expense_model_by_id(session, updated_expense.msg_id, updated_expense.chat_id, updated_expense.user_id)
+        if not db_expense:
             return None
             
         # Update fields from provided model
-        db_outcome.amount = updated_outcome.amount
-        db_outcome.description = updated_outcome.description
-        db_outcome.type = updated_outcome.type
-        db_outcome.category = updated_outcome.category
-        db_outcome.date = updated_outcome.date
+        db_expense.amount = updated_expense.amount
+        db_expense.description = updated_expense.description
+        db_expense.type = updated_expense.type
+        db_expense.category = updated_expense.category
+        db_expense.date = updated_expense.date
                 
         session.commit()
-        session.refresh(db_outcome)
-        return OutcomeSchema.model_validate(db_outcome)
+        session.refresh(db_expense)
+        return ExpenseSchema.model_validate(db_expense)
 
     @staticmethod
     def soft_delete(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
         """Set deleted_at=now if owned by user_id and not already deleted. Return True if changed."""
-        exp = OutcomeRepository.__get_outcome_model_by_id(session, message_id, chat_id, user_id)
+        exp = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id)
         if not exp:
             return False
         if exp.user_id != user_id:
@@ -148,7 +148,7 @@ class OutcomeRepository:
         Returns:
             True if restored, False otherwise
         """
-        exp = OutcomeRepository.__get_outcome_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
+        exp = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
         if not exp or exp.user_id != user_id or exp.deleted_at is None:
             return False
         now = datetime.now(timezone.utc)
@@ -164,9 +164,9 @@ class OutcomeRepository:
         return True
     
     @staticmethod
-    def delete_outcome(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
+    def delete_expense(session: Session, message_id: int, chat_id: int, user_id: int) -> bool:
         """
-        Delete an outcome record that is still marked as soft deleted.
+        Delete an expense record that is still marked as soft deleted.
         
         Args:
             session: Database session
@@ -177,13 +177,29 @@ class OutcomeRepository:
         Returns:
             True if deleted, False if not found
         """
-        db_outcome = OutcomeRepository.__get_outcome_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
-        if not db_outcome:
+        db_expense = ExpenseRepository.__get_expense_model_by_id(session, message_id, chat_id, user_id, include_deleted=True)
+        if not db_expense:
             return False
-        # Skip hard deletion when the outcome was restored before the grace window elapsed
-        if db_outcome.deleted_at is None:
+        # Skip hard deletion when the expense was restored before the grace window elapsed
+        if db_expense.deleted_at is None:
             return False
  
-        session.delete(db_outcome)
+        session.delete(db_expense)
         session.commit()
         return True
+
+    @staticmethod
+    def get_last_expenses(session: Session, chat_id: int, user_id: int, limit: int = 5) -> list[ExpenseSchema]:
+        """Return the most recent non-deleted expenses for a chat/user pair sorted by date."""
+        expenses = (
+            session.query(ExpenseModel)
+            .filter(
+                ExpenseModel.chat_id == chat_id,
+                ExpenseModel.user_id == user_id,
+                ExpenseModel.deleted_at.is_(None)
+            )
+            .order_by(ExpenseModel.date.desc(), ExpenseModel.msg_id.desc())
+            .limit(limit)
+            .all()
+        )
+        return [ExpenseSchema.model_validate(expense) for expense in expenses]

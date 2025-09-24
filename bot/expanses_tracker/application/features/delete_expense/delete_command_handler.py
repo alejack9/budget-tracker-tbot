@@ -1,25 +1,41 @@
-"""Handles the /delete command to soft delete an outcome."""
+"""Handles the /delete command to soft delete an expense."""
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonDataDto
 from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
 from expanses_tracker.application.utils.decorators import ensure_access_guard
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
-from expanses_tracker.persistence.repositories.repository import OutcomeRepository
+from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
 log = logging.getLogger(__name__)
 
 async def __delete_notice_job__(context: ContextTypes.DEFAULT_TYPE, notice: Message, chat_id: int, message_id: int, user_id: int):
     try:
         deleted = False
+        recent_summary: str | None = None
         with DatabaseFactory.get_session() as session:
-            deleted = OutcomeRepository.delete_outcome(session, message_id, chat_id, user_id)
+            deleted = ExpenseRepository.delete_expense(session, message_id, chat_id, user_id)
+            if deleted:
+                recent_expenses = ExpenseRepository.get_last_expenses(
+                    session=session,
+                    chat_id=chat_id,
+                    user_id=user_id
+                )
+                recent_summary = format_recent_expenses(recent_expenses)
         if deleted:
             await context.bot.edit_message_text("Deleted.", chat_id=notice.chat_id, message_id=notice.message_id)
+            if recent_summary is not None:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=recent_summary,
+                    parse_mode=ParseMode.HTML
+                )
         else:
-            log.debug("Outcome not found.")
+            log.debug("Expense not found.")
     except Exception as e:
         # Fine if it's already gone or not deletable
         log.debug("Notice delete skipped: %s", e)
@@ -47,13 +63,13 @@ async def __soft_delete_expense__(
         user_id: int,
         message: Message,
         context: ContextTypes.DEFAULT_TYPE):
-    # Delete outcome from database
+    # Delete expense from database
     with DatabaseFactory.get_session() as session:
         try:
-            success = OutcomeRepository.soft_delete(session, message_id, chat_id, user_id)
+            success = ExpenseRepository.soft_delete(session, message_id, chat_id, user_id)
             if not success:
                 await message.reply_text(
-                    "Outcome record not found.",
+                    "Expense record not found.",
                     reply_to_message_id=message_id)
                 return
             # Post a short-lived Restore notice with an inline button
@@ -86,17 +102,17 @@ async def __soft_delete_expense__(
                 name=f"del_notice_{notice.chat_id}_{notice.message_id}",
             )
         except Exception as e:
-            log.error("Error deleting outcome: %s", e)
-            await message.reply_text(f"Error deleting outcome: {str(e)}", reply_to_message_id=message_id)
+            log.error("Error deleting expense: %s", e)
+            await message.reply_text(f"Error deleting expense: {str(e)}", reply_to_message_id=message_id)
 
 @ensure_access_guard
 async def delete_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handles the /delete command to soft delete an outcome."""
+    """Handles the /delete command to soft delete an expense."""
     if not update.message or not update.effective_chat or not update.effective_user:
         return
     # get message ID of the replied message
     if not update.message.reply_to_message:
-        await update.message.reply_text("Please reply to the message of the outcome you want to delete.", reply_to_message_id=update.message.message_id)
+        await update.message.reply_text("Please reply to the message of the expense you want to delete.", reply_to_message_id=update.message.message_id)
         return
     # get chat ID
     chat_id = update.effective_chat.id

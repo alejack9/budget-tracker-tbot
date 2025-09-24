@@ -1,4 +1,4 @@
-"""Handler for the "edit" button in the outcome editing feature."""
+"""Handler for the "edit" button in the expense editing feature."""
 import logging
 from telegram import CallbackQuery, Update
 from telegram.ext import ContextTypes
