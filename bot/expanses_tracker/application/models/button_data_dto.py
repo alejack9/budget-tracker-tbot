@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from enum import Enum
 
-class BUTTON_ACTIONS(Enum):
+class ButtonActions(Enum):
     DELETE = 'delete'
     RESTORE = 'restore'
     CATEGORY = 'category'
@@ -13,7 +13,7 @@ class ButtonCallbacksRegistry:
     """Registry for button callback actions."""
     BTN_CALLBACKS = {}
     @staticmethod
-    def add_callback(action: BUTTON_ACTIONS, func):
+    def add_callback(action: ButtonActions, func):
         """Register a button callback action."""
         if action in ButtonCallbacksRegistry.BTN_CALLBACKS:
             raise ValueError(f"Callback for action {action} is already registered.")
@@ -21,7 +21,7 @@ class ButtonCallbacksRegistry:
 
 class ButtonDataDto(BaseModel):
     """Data Transfer Object for button data."""
-    action: BUTTON_ACTIONS
+    action: ButtonActions
     message_id: int
     chat_id: int
     value: Optional[str] = None

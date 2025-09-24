@@ -11,6 +11,8 @@ from expanses_tracker.application.models.outcome import OutcomeDto
 
 log = logging.getLogger(__name__)
 
+AMBIGUOUS_CMD_NOT_ENOUGH_PARAMS = "Ambiguous command. Not enough parameters."
+
 def __get_message_date__(parts: list[str], default_date: datetime) -> tuple[datetime, list[str]]:
     """Extract date from the last element of parts if it matches d/m or d/m/yyyy format."""
     msg_dt = default_date
@@ -64,9 +66,9 @@ def get_message_args(text: str | None, date: datetime) -> OutcomeDto:
         parts = shlex.split(sanitized_text)
     except ValueError as exc:
         log.warning("Exception while splitting message text: %s", exc)
-        raise ValueError("Ambiguous command. Not enough parameters.") from None
+        raise ValueError(AMBIGUOUS_CMD_NOT_ENOUGH_PARAMS) from None
     if not parts:
-        raise ValueError("Ambiguous command. Not enough parameters.")
+        raise ValueError(AMBIGUOUS_CMD_NOT_ENOUGH_PARAMS)
 
     # Extract date
     out_date, parts = __get_message_date__(parts, date)
@@ -76,7 +78,7 @@ def get_message_args(text: str | None, date: datetime) -> OutcomeDto:
     out_cat, parts = __get_message_category__(parts)
 
     if len(parts) < 2:
-        raise ValueError("Ambiguous command. Not enough parameters.")
+        raise ValueError(AMBIGUOUS_CMD_NOT_ENOUGH_PARAMS)
 
     # Extract description
     out_desc = " ".join(parts[1:])

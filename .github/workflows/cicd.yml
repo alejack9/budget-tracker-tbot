@@ -1,5 +1,8 @@
 # runs on main and pull requests into main
 name: CICD Pipeline
+permissions:
+  contents: read
+  pull-requests: write
 on:
   push:
     branches: [ main, release ]
@@ -37,16 +40,19 @@ jobs:
           poetry run pytest
         working-directory: ./bot
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >-
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.python.version=3.12
             -Dsonar.sources=bot/expanses_tracker
             -Dsonar.tests=bot/tests
+            -Dsonar.exclusions=bot/expanses_tracker/persistence/migrations/**
+            -Dsonar.pullrequest.github.summary_comment=true
       - name: build package
         run: |
           poetry build
