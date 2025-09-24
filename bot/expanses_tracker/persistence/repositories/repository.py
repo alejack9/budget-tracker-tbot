@@ -187,3 +187,19 @@ class ExpenseRepository:
         session.delete(db_expense)
         session.commit()
         return True
+
+    @staticmethod
+    def get_last_expenses(session: Session, chat_id: int, user_id: int, limit: int = 5) -> list[ExpenseSchema]:
+        """Return the most recent non-deleted expenses for a chat/user pair sorted by date."""
+        expenses = (
+            session.query(ExpenseModel)
+            .filter(
+                ExpenseModel.chat_id == chat_id,
+                ExpenseModel.user_id == user_id,
+                ExpenseModel.deleted_at.is_(None)
+            )
+            .order_by(ExpenseModel.date.desc(), ExpenseModel.msg_id.desc())
+            .limit(limit)
+            .all()
+        )
+        return [ExpenseSchema.model_validate(expense) for expense in expenses]

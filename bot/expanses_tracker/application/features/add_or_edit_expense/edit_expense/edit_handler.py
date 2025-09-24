@@ -1,8 +1,10 @@
 """Handler for editing an existing expense entry in the database."""
 import logging
 from telegram import Message, Update
+from telegram.constants import ParseMode
 
 from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
 from expanses_tracker.application.models.expense import ExpenseSchema
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
@@ -40,6 +42,16 @@ async def edit_handler(msg: Message, msg_id: int, update: Update):
             )
             if expense:
                 await generate_notice(update, msg_id, msg, expense, msg)
+                recent_expenses = ExpenseRepository.get_last_expenses(
+                    session=session,
+                    chat_id=chat_id,
+                    user_id=user_id
+                )
+                await msg.reply_text(
+                    format_recent_expenses(recent_expenses),
+                    reply_to_message_id=msg.message_id,
+                    parse_mode=ParseMode.HTML
+                )
             else:
                 await msg.reply_text(
                     "No existing expense found to update.",

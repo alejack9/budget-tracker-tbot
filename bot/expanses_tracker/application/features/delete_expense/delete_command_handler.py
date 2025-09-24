@@ -1,11 +1,13 @@
 """Handles the /delete command to soft delete an expense."""
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonDataDto
 from expanses_tracker.application.models.constants import UNDO_GRACE_SECONDS
 from expanses_tracker.application.utils.decorators import ensure_access_guard
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 from expanses_tracker.persistence.repositories.repository import ExpenseRepository
 
@@ -14,10 +16,24 @@ log = logging.getLogger(__name__)
 async def __delete_notice_job__(context: ContextTypes.DEFAULT_TYPE, notice: Message, chat_id: int, message_id: int, user_id: int):
     try:
         deleted = False
+        recent_summary: str | None = None
         with DatabaseFactory.get_session() as session:
             deleted = ExpenseRepository.delete_expense(session, message_id, chat_id, user_id)
+            if deleted:
+                recent_expenses = ExpenseRepository.get_last_expenses(
+                    session=session,
+                    chat_id=chat_id,
+                    user_id=user_id
+                )
+                recent_summary = format_recent_expenses(recent_expenses)
         if deleted:
             await context.bot.edit_message_text("Deleted.", chat_id=notice.chat_id, message_id=notice.message_id)
+            if recent_summary is not None:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=recent_summary,
+                    parse_mode=ParseMode.HTML
+                )
         else:
             log.debug("Expense not found.")
     except Exception as e:

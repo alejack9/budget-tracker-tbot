@@ -1,7 +1,9 @@
 """ Handler for adding a new expense based on user message input. """
 import logging
 from telegram import Message, Update
+from telegram.constants import ParseMode
 from expanses_tracker.application.features.add_or_edit_expense.expense_notice import generate_notice
+from expanses_tracker.application.utils.expense_formatter import format_recent_expenses
 from expanses_tracker.application.utils.message_parser import get_message_args
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 from expanses_tracker.persistence.repositories.repository import ExpenseRepository
@@ -46,6 +48,16 @@ async def add_handler(msg: Message, msg_id: int, update: Update):
                 log.error("No message found in update.")
                 return
             await generate_notice(update, msg_id, msg, expense, update.message)
+            recent_expenses = ExpenseRepository.get_last_expenses(
+                session=session,
+                chat_id=chat_id,
+                user_id=user_id
+            )
+            await update.message.reply_text(
+                format_recent_expenses(recent_expenses),
+                reply_to_message_id=msg.message_id,
+                parse_mode=ParseMode.HTML
+            )
         except Exception as e:
             log.error("Error saving expense: %s", e)
             await msg.reply_text(
