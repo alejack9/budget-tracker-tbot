@@ -1,4 +1,4 @@
-"""Data Transfer Object for button data in the outcome tracker bot."""
+"""Data Transfer Object for button data in the expense tracker bot."""
 from typing import Optional
 from pydantic import BaseModel
 from enum import Enum

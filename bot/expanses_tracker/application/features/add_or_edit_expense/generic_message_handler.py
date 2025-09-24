@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 @ensure_access_guard
 async def generic_message_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
-    """Handle generic messages for adding or editing outcomes."""
+    """Handle generic messages for adding or editing expenses."""
     if (msg := update.effective_message) is None:
         log.warning("No effective message found in update.")
         return

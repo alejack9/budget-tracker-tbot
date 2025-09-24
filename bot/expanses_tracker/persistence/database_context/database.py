@@ -1,7 +1,7 @@
 import os
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
-from expanses_tracker.persistence.configurations.outcome_model import Base
+from expanses_tracker.persistence.configurations.expense_model import Base
 
 class DatabaseFactory:
     """Factory class to create database connections based on environment variables"""

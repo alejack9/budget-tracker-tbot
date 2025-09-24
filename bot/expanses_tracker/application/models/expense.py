@@ -1,10 +1,10 @@
-"""Data Transfer Object for outcome details in the outcome tracker bot."""
+"""Data Transfer Object for expense details in the expense tracker bot."""
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
-class OutcomeDto(BaseModel):
+class ExpenseDto(BaseModel):
     """Model representing the arguments extracted from a message."""
     amount: float
     description: str
@@ -14,8 +14,8 @@ class OutcomeDto(BaseModel):
     deleted_at: Optional[datetime] = None
 
 @dataclass
-class OutcomeSchema(BaseModel):
-    """Pydantic model for serialization/deserialization of outcomes"""
+class ExpenseSchema(BaseModel):
+    """Pydantic model for serialization/deserialization of expenses"""
     msg_id: int
     chat_id: int
     user_id: int

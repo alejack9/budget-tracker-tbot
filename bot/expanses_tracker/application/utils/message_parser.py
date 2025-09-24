@@ -7,7 +7,7 @@ import shlex
 from typing import Optional
 
 from expanses_tracker.application.models.constants import CATEGORIES, TYPES
-from expanses_tracker.application.models.outcome import OutcomeDto
+from expanses_tracker.application.models.expense import ExpenseDto
 
 log = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ def __get_message_category__(parts: list[str]) -> tuple[Optional[str], list[str]
 # - 10/2 spesa -> type: TBD (via buttons), category: TBD (via buttons), amount: 5 (10/2), description: spesa
 # - 10 spesa casa 21/05 -> type: TBD (via buttons), category: TBD (via buttons), amount: 10, description: spesa casa, date: 21/05/current_year
 # - 10 spesa casa food need 21/05 -> type: need, category: food, amount: 10, description: spesa casa, date: 21/05/current_year
-def get_message_args(text: str | None, date: datetime) -> OutcomeDto:
-    """Parse a message text to extract outcome details."""
+def get_message_args(text: str | None, date: datetime) -> ExpenseDto:
+    """Parse a message text to extract expense details."""
     if text is None or not text.strip():
         raise ValueError("Empty command. Not enough parameters.")
     # Escape apostrophes embedded in words so shlex keeps the token intact
@@ -107,7 +107,7 @@ def get_message_args(text: str | None, date: datetime) -> OutcomeDto:
         raise ValueError("Ambiguous command. Invalid amount.") from None
 
     # Create and return the MessageArgs model instance
-    return OutcomeDto(
+    return ExpenseDto(
         amount=out_amount,
         description=out_desc,
         type=out_type,

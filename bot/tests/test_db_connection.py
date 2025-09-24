@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import inspect
 
 from expanses_tracker.persistence import persistence_registration
-from expanses_tracker.persistence.configurations.outcome_model import OutcomeModel
+from expanses_tracker.persistence.configurations.expense_model import ExpenseModel
 from expanses_tracker.persistence.database_context.database import DatabaseFactory
 
 # Set up logging
@@ -30,7 +30,7 @@ def test_db_connection():
 
     # Query using a session and inspect tables without private access
     with DatabaseFactory.get_session() as session:
-        result = session.query(OutcomeModel).limit(1).all()
+        result = session.query(ExpenseModel).limit(1).all()
         logger.info("Query executed successfully! Found %d records.", len(result))
 
         # Use the session bind (public) instead of a private engine attribute

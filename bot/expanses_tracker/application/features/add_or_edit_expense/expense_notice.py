@@ -2,11 +2,11 @@ import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Message, Update
 
 from expanses_tracker.application.models.button_data_dto import ButtonActions, ButtonDataDto
-from expanses_tracker.application.models.outcome import OutcomeSchema
+from expanses_tracker.application.models.expense import ExpenseSchema
 
 log = logging.getLogger(__name__)
 
-async def generate_notice(update: Update, msg_id: int, msg: Message, outcome: OutcomeSchema, message_to_reply: Message) -> Message | None:
+async def generate_notice(update: Update, msg_id: int, msg: Message, expense: ExpenseSchema, message_to_reply: Message) -> Message | None:
     # Get chat ID
     if not update.effective_chat:
         log.error("No effective chat found in update.")
@@ -35,11 +35,11 @@ async def generate_notice(update: Update, msg_id: int, msg: Message, outcome: Ou
     )
     notice = await message_to_reply.reply_text(
         f"Expense saved at {msg.date}:\n"
-        f"Amount: {outcome.amount}\n"
-        f"Description: {outcome.description}\n"
-        f"Type: {outcome.type or 'Not specified'}\n"
-        f"Category: {outcome.category or 'Not specified'}\n"
-        f"Date: {outcome.date.strftime('%Y-%m-%d')}",
+        f"Amount: {expense.amount}\n"
+        f"Description: {expense.description}\n"
+        f"Type: {expense.type or 'Not specified'}\n"
+        f"Category: {expense.category or 'Not specified'}\n"
+        f"Date: {expense.date.strftime('%Y-%m-%d')}",
         reply_markup=InlineKeyboardMarkup([[del_btn, edit_category_btn, edit_type_btn]]),
         reply_to_message_id=msg.message_id
     )
