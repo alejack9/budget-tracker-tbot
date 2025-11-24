@@ -1,6 +1,4 @@
 import logging
-from dependency_injector.wiring import Provide
-from src.config.container import Container
 from src.application.dto.add_expense import AddExpenseInput, AddExpenseOutput
 from src.domain.entities.expense import Expense
 from src.domain.repositories.expense_repository import ExpenseRepository
@@ -8,7 +6,7 @@ from src.domain.repositories.expense_repository import ExpenseRepository
 log = logging.getLogger(__name__)
 
 class AddExpenseUseCase:
-    def __init__(self, expense_repo: ExpenseRepository = Provide[Container.expense_repository]):
+    def __init__(self, expense_repo: ExpenseRepository):
         self._expense_repo = expense_repo
 
     def execute(self, input_dto: AddExpenseInput) -> AddExpenseOutput:

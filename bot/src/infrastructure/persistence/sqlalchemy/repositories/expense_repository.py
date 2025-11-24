@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from src.domain.entities.expense import Expense

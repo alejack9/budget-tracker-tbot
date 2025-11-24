@@ -11,8 +11,6 @@ from dependency_injector.wiring import Provide, inject
 from src.application.dto.add_expense import AddExpenseInput, AddExpenseOutput
 from src.application.use_cases.add_expense import AddExpenseUseCase
 from src.config.settings import Settings
-from src.domain.entities.expense import Expense
-from src.config.container import Container
 from .access_guard import ensure_access_guard
 
 log = logging.getLogger(__name__)
@@ -51,8 +49,8 @@ async def add_handler(
     msg: Message,
     msg_id: int,
     update: Update,
-    add_expense_use_case: AddExpenseUseCase = Provide[Container.add_expense_use_case],
-    settings: Settings = Provide[Container.settings],
+    add_expense_use_case: AddExpenseUseCase,
+    settings: Settings,
 ):
     """Handle adding a new outcome based on user message input."""
     try:

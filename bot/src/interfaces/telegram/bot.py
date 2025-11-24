@@ -1,11 +1,14 @@
 import logging
+
 from dependency_injector.wiring import Provide
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 from src.config.container import Container
 from src.config.settings import Settings
+import src.interfaces.telegram.commands.access_guard as access_guard_module
 import src.interfaces.telegram.commands.messages as messages_module
+import src.interfaces.telegram.commands.start as start_module
 from .commands import generic_message_handler, start_handler
 
 logging.basicConfig(level=logging.WARNING)
@@ -35,5 +38,12 @@ def main(settings: Settings = Provide[Container.settings]):
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[__name__])
+    container.wire(
+        modules=[
+            __name__,
+            messages_module,
+            access_guard_module,
+            start_module,
+        ],
+    )
     main()
