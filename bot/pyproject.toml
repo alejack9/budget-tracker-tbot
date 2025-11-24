@@ -1,22 +1,24 @@
 [project]
-name = "expanses_tracker"
+name = "budget_tracker"
 version = "0.1.0"
 description = "Expanses tracker telegram bot"
 authors = [
     {name = "Alessandro Giacche",email = "alessandrogiacche@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<=3.13"
 dependencies = [
     "python-telegram-bot[job-queue] (>=22.4,<23.0)",
     "pydantic (>=2.11.7,<3.0.0)",
+    "pydantic_settings (>=2.11.7,<3.0.0)",
     "SQLAlchemy (>=2.0.0,<3.0.0)",
     "psycopg2-binary (>=2.9.0,<3.0.0)",
-    "alembic (>=1.12.0,<2.0.0)"
+    "alembic (>=1.12.0,<2.0.0)",
+    "dependency-injector (>=4.48.2,<5.0.0)"
 ]
 
 [tool.poetry]
-packages = [{ include = "expanses_tracker", from = "." }]
+packages = [{ include = "src", from = "." }]
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.8"

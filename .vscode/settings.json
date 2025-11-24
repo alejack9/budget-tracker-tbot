@@ -11,5 +11,7 @@
     "pylint.importStrategy": "fromEnvironment",
     "pylint.args": [
         "--rcfile=${workspaceFolder}/bot/.pylintrc"
-    ]
+    ],
+    "chatgpt.commentCodeLensEnabled": false,
+    "python-envs.pythonProjects": []
 }

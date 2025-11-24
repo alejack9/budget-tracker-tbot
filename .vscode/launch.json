@@ -5,7 +5,7 @@
             "name": "Bot (module)",
             "type": "debugpy",
             "request": "launch",
-            "module": "expanses_tracker.api.main",
+            "module": "src.interfaces.telegram.bot",
             "cwd": "${workspaceFolder}/bot",
             "envFile": "${workspaceFolder}/.env",
             "console": "integratedTerminal",
@@ -15,7 +15,7 @@
             "name": "Bot (file with PYTHONPATH)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/bot/expanses_tracker/api/main.py",
+            "program": "${workspaceFolder}/bot/src/interfaces/telegram/bot.py",
             "cwd": "${workspaceFolder}/bot",
             "envFile": "${workspaceFolder}/.env",
             "env": {
